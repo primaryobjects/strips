@@ -1,6 +1,7 @@
 var fs = require('fs');
 var PEG = require("pegjs");
 var util = require('util');
+var combinatorics = require('./node_modules/js-combinatorics/combinatorics.js').Combinatorics;
 
 PlanningManager = {
 	load: function(grammarFileName, codeFileName, callback) {
@@ -62,7 +63,7 @@ PlanningManager = {
 		return result;
 	},
 	
-	predicateCombinations: function(state) {
+	/*predicateCombinations: function(state) {
 		// Returns all possible unique combinations of actions in a state.
 		// Sort each unique action into an array, to prepare for matching up all possible cases.
 		var allPredicates = [];
@@ -84,12 +85,18 @@ PlanningManager = {
 		}
 		
 		return PlanningManager.allPossibleCases(allPredicates);
+	},*/
+	
+	predicateCombinations: function(state) {
+		var cmb = combinatorics.permutationCombination(state.actions);
+
+		return cmb.toArray();
 	},
 	
-	getAction: function(name, arr) {
+	getAction: function(name, arr, startAt) {
 		// Finds a matching action in an array of preconditions by matching on the action name.
 		for (var i in arr) {
-			if (arr[i].action == name) {
+			if (arr[i].action == name && i == startAt) {
 				return arr[i];
 			}
 		}
@@ -192,6 +199,41 @@ PlanningManager = {
 		return resolvedAction;
 	},
 	
+	isCaseValidForPrecondition: function(testCase, precondition) {
+		// Returns true if the test case has the same number and type of actions.
+		// Is this a valid test case for this precondition?
+		var isValidTestCase = false;
+		
+		// Check for the same number of actions.
+		if (precondition.length == testCase.length) {
+			var actionHash = {};
+			
+			// Check for the same type of actions.
+			for (var j in testCase) {
+				var testCaseAction = testCase[j];
+				
+				for (var k in precondition) {
+					var key = JSON.stringify(precondition[k]);
+					
+					if (!actionHash[key]) {
+						// This precondition action has not yet been assigned. Verify the type matches.
+						if (precondition[k].action == testCaseAction.action) {
+							// We found a match of a test case action with a precondition action. Note that this one is now used, so if we come across a duplicate, the test case will fail.
+							actionHash[key] = 1;
+							break;
+						}
+					}
+				}
+			}
+			
+			if (Object.keys(actionHash).length == precondition.length) {
+				isValidTestCase = true;
+			}
+		}
+		
+		return isValidTestCase;
+	},
+	
 	applicableActions: function(domain, state) {
 		// Returns an array of applicable concrete actions for the current state.
         // Test each domain precondition against the cases. If one holds valid, then that action is applicable in the current state.
@@ -204,59 +246,70 @@ PlanningManager = {
             var action = domain.actions[i]; // op1
             var parameters = action.parameters; // x1, x2, x3
             var populatedAction = JSON.parse(JSON.stringify(action)); // copy for replacing parameters with actual values.
+			var parameterMapHash = {};
 
             // Assign values to the parameters for each test case.
             for (var j in cases) {
                 var testCase = cases[j];
+				
+				if (PlanningManager.isCaseValidForPrecondition(testCase, action.precondition)) {
+					var parameterMap = []; // map of parameter values to be populated
+					// Initialize default parameter values for this action. We'll set concrete values next.
+					for (var j in parameters) {
+						parameterMap[parameters[j]] = null;
+					}
 
-                var parameterMap = []; // map of parameter values to be populated
-                // Initialize default parameter values for this action. We'll set concrete values next.
-                for (var j in parameters) {
-                    parameterMap[parameters[j]] = null;
-                }
+					// Get the action's precondition parameters.
+					var testCaseIndex = 0;
+					for (var k in action.precondition) {
+						var precondition = action.precondition[k];
+						var populatedPreconditionPart = JSON.parse(JSON.stringify(precondition)); // copy for replacing parameters with actual values.
+						
+						// Find an action in the test case that matches the precondition action.
+						var testCaseAction = PlanningManager.getAction(precondition.action, testCase, testCaseIndex++);
+						if (testCaseAction) {
+							// Found a matching action. So far, so good.
+							var parameterIndex = 0;
+							
+							// Assign a value to each parameter of the precondition.
+							for (var l in precondition.parameters) {
+								var parameter = precondition.parameters[l];
+								var value = parameterMap[parameter];
 
-                // Get the action's precondition parameters.
-                for (var k in action.precondition) {
-                    var precondition = action.precondition[k];
-                    var populatedPreconditionPart = JSON.parse(JSON.stringify(precondition)); // copy for replacing parameters with actual values.
-                    
-                    // Find an action in the test case that matches the precondition action.
-                    var testCaseAction = PlanningManager.getAction(precondition.action, testCase);
-                    if (testCaseAction) {
-                        // Found a matching action. So far, so good.
-                        var parameterIndex = 0;
-                        
-                        // Assign a value to each parameter of the precondition.
-                        for (var l in precondition.parameters) {
-                            var parameter = precondition.parameters[l];
-                            var value = parameterMap[parameter];
-                            
-                            // Has this parameter already been assigned a value?
-                            if (!value) {
-                                // This is a new parameter, so assign it a value.
-                                value = testCaseAction.parameters[parameterIndex++];
-                                parameterMap[parameter] = value;
-                            }
-                            
-                            // Assign this value to all instances of this parameter in the precondition.
-                            populatedPreconditionPart.parameters[l] = value;
-                        }
-                    }
-                    else {
-                        // Precondition fails. No matching test case action for this precondition action.
-                    }
-                    
-                    populatedAction.precondition[k] = populatedPreconditionPart;
-                    populatedAction.map = parameterMap;
-                }
+								// Has this parameter already been assigned a value?
+								if (!value) {
+									// This is a new parameter, so assign it a value.
+									value = testCaseAction.parameters[parameterIndex++];
+									parameterMap[parameter] = value;
+								}
 
-                // Does the filled-in precondition exist in the test cases?
-                var applicableAction = PlanningManager.getApplicableActionInState(state, populatedAction);
-				if (applicableAction) {
-					// This action is applicable in this state.
-					result.push(applicableAction);
+								// Assign this value to all instances of this parameter in the precondition.
+								populatedPreconditionPart.parameters[l] = value;
+							}
+						}
+						else {
+							// Precondition fails. No matching test case action for this precondition action.
+						}
+						
+						populatedAction.precondition[k] = populatedPreconditionPart;
+						populatedAction.map = parameterMap;
+						populatedAction.case = testCase;
+					}
+
+					// Does the filled-in precondition exist in the test cases?
+					var applicableAction = PlanningManager.getApplicableActionInState(state, populatedAction);
+					if (applicableAction) {
+						var key = util.inspect(applicableAction.map, true, 100);
+						if (!parameterMapHash[key]) {
+							// Prevent duplicate mapping cases.
+							parameterMapHash[key] = 1;
+							
+							// This action is applicable in this state.
+							result.push(applicableAction);
+						}
+					}
 				}
-            }
+			}
         }
 
         return result;
