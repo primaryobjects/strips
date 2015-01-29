@@ -1,0 +1,52 @@
+program   = result:domain { return result; }
+ 
+domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req actions:action*
+{
+  var reqs = '';
+  for (var i in req) {
+     reqs += req[i] + ', ';
+  }
+ 
+  return { domain: domainName.join('').replace(/[,:?]/g, ''), requirements: req, actions: actions };
+}
+ 
+req = ":requirements" req:reqType* delimiter*
+{
+  var result = [];
+  for (var i in req) {
+     result.push(req[i]);
+  }
+ 
+  return result;
+}
+ 
+reqType = space* ":" req:word
+{ return req.join('').replace(/[,:?]/g, ''); }
+ 
+action = ":action" space* operationName:word parameters:parameters precondition:precondition effect:effect
+{ return { action: operationName.join('').replace(/[,:?]/g, ''), parameters: parameters, precondition: precondition, effect: effect }; }
+ 
+logic = operation:logicOp* delimiter* action:word space* params:parameter* delimiter*
+{ return { operation: operation.join('').replace(/[,:? ]/g, ''), action: action.join('').replace(/[,:? ]/g, ''), parameters: params }; }
+ 
+boolean   = "#t" / "#f"
+integer   = [1-9] [0-9]*
+string    = "\"" ("\\" . / [^"])* "\""
+word      = word:([a-zA-Z0-9\-]+) { return word; }
+symbol    = (!delimiter .)+
+space     = [\n\r\t ]
+paren     = "(" / ")"
+logicOp   = "and" / "not"
+delimiter = paren / space
+ 
+parameters = space* ":parameters" delimiter+ params:parameter+ delimiter space*
+{ return params; }
+ 
+parameter = "?" param:word space*
+{ return param.join('').replace(/[,:? ]/g, ''); }
+ 
+precondition = space* ":precondition" delimiter+ logic:logic+
+{ return logic; }
+ 
+effect = space* ":effect" delimiter+ logic:logic+
+{ return logic; }

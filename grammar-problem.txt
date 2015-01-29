@@ -1,0 +1,26 @@
+program   = result:problem { return result; }
+ 
+problem = space* delimiter* "define" space* delimiter* "problem" space* name:word delimiter* space* domain:domain space* states:state*
+{ return { name: name.join('').replace(/[,:? ]/g, ''), domain: domain, states: states }; }
+ 
+domain = ":domain" space* name:word delimiter*
+{ return name.join('').replace(/[,:? ]/g, ''); }
+ 
+state = space* delimiter* ":" name:word space* delimiter* actions:logic*
+{ return { name: name.join('').replace(/[,:? ]/g, ''), actions: actions }; }
+ 
+logic = operation:logicOp* delimiter* action:word space* params:parameter* delimiter*
+{ return { operation: operation.join('').replace(/[,:? ]/g, ''), action: action.join('').replace(/[,:? ]/g, ''), parameters: params }; }
+ 
+boolean   = "#t" / "#f"
+integer   = [1-9] [0-9]*
+string    = "\"" ("\\" . / [^"])* "\""
+word      = word:([a-zA-Z0-9\-]+) { return word; }
+symbol    = (!delimiter .)+
+space     = [\n\r\t ]
+paren     = "(" / ")"
+logicOp   = "and" / "not"
+delimiter = paren / space
+ 
+parameter = param:word space*
+{ return param.join('').replace(/[,:? ]/g, ''); }

@@ -1,0 +1,13 @@
+{
+  "author": "Kory Becker",
+  "name": "strips",
+  "description": "Example of AI planning using STRIPS and PDDL.",
+  "version": "0.0.1",
+  "dependencies": {
+	"pegjs": "*"
+  },
+  "engines": {
+    "node": "*",
+    "npm": "*"
+  }
+}
