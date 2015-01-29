@@ -23,7 +23,7 @@ PlanningManager = {
 
 	loadDomain: function(callback) {
 		// Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-		PlanningManager.load('grammar-domain.txt', 'domain.txt', function(result) {
+		PlanningManager.load('./grammar/grammar-domain.txt', './grammar/problem1/domain.txt', function(result) {
 			if (callback) {
 				callback(result);
 			}
@@ -32,7 +32,7 @@ PlanningManager = {
 
 	loadProblem: function(callback) {
 		// Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-		PlanningManager.load('grammar-problem.txt', 'problem.txt', function(result) {
+		PlanningManager.load('./grammar/grammar-problem.txt', './grammar/problem1/problem.txt', function(result) {
 			if (callback) {
 				callback(result);
 			}
