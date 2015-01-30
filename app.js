@@ -142,7 +142,7 @@ PlanningManager = {
     
     applicableActions: function(domain, state) {
         // Returns an array of applicable concrete actions for the current state.
-        // Test each domain precondition against the cases. If one holds valid, then that action is applicable in the current state.
+        // Test each domain action precondition against the cases. If one holds valid, then that action is applicable in the current state.
         var result = [];
 
         // Get all action combinations for the current state.
@@ -224,6 +224,8 @@ PlanningManager = {
 
     applyAction: function(action, state) {
         // Applies an action on a state and returns the new state. It is assumed that the precondition has already been tested.
+        var result = JSON.parse(JSON.stringify(state));
+
         for (var i in action.effect) {
             var actionOperation = action.effect[i];
             var operation = actionOperation.operation || 'and';
@@ -241,7 +243,7 @@ PlanningManager = {
 
                 if (!isExists) {
                     // Add this predicate to the state.
-                    state.actions.push(actionOperation);
+                    result.actions.push(actionOperation);
                 }                
             }
             else {
@@ -250,13 +252,13 @@ PlanningManager = {
                     // Find matching action.
                     if (PlanningManager.isEqual(state.actions[j], actionOperation)) {
                         // This is our target, remove it.
-                        state.actions.splice(j, 1);
+                        result.actions.splice(j, 1);
                     }
                 }
             }
         }
 
-        return state;
+        return result;
     },
 
     isGoal: function(state, goalState) {
@@ -311,10 +313,8 @@ function main() {
     PlanningManager.loadDomain(function(domain) {
         // Load the problem.
         PlanningManager.loadProblem(function(problem) {
-            var state = problem.states[0];
-
             // Get all valid actions for the initial state.
-            var actions = PlanningManager.applicableActions(domain, state);
+            var actions = PlanningManager.applicableActions(domain, problem.states[0]);
 
             console.log(util.inspect(actions, true, 100, true));
         });
