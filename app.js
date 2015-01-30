@@ -23,7 +23,7 @@ PlanningManager = {
 
     loadDomain: function(callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-domain.txt', './grammar/problem1/domain.txt', function(result) {
+        PlanningManager.load('./grammar/grammar-domain.txt', './grammar/problem2/domain.txt', function(result) {
             if (callback) {
                 callback(result);
             }
@@ -32,7 +32,7 @@ PlanningManager = {
 
     loadProblem: function(callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-problem.txt', './grammar/problem1/problem.txt', function(result) {
+        PlanningManager.load('./grammar/grammar-problem.txt', './grammar/problem2/problem.txt', function(result) {
             if (callback) {
                 callback(result);
             }
@@ -61,6 +61,11 @@ PlanningManager = {
         return count;
     },
     
+    isPreconditionParametersValid: function(precondition) {
+        // TODO: Verify the parameter values for this precondition are valid for their types.
+        return true;
+    },
+
     isPreconditionSatisfied: function(state, precondition) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
@@ -111,7 +116,7 @@ PlanningManager = {
         var resolvedAction = null;
 
         // Does the filled-in precondition exist in the state test cases?
-        if (PlanningManager.isPreconditionSatisfied(state, action.precondition)) {
+        if (PlanningManager.isPreconditionParametersValid(action.precondition) && PlanningManager.isPreconditionSatisfied(state, action.precondition)) {
             // This action is applicable.
             // Assign a value to each parameter of the effect.
             var populatedEffect = JSON.parse(JSON.stringify(action.effect));
@@ -305,6 +310,50 @@ PlanningManager = {
         }
 
         return result;
+    },
+
+    actionToString: function(action) {
+        var result = action.action;
+
+        for (var key in action.map) {
+            result += ' ' + action.map[key];
+        }
+
+        return result;
+    },
+
+    run: function(domain, state, goalState, depth) {
+        var validActions = PlanningManager.applicableActions(domain, state.state);
+        var fringe = [];
+        var childState = null;
+
+        if (PlanningManager.isGoal(state.state, goalState)) {
+            console.log('*** Solution found in ' + depth + ' steps!');
+
+            // Compile solution path.
+            while (state != null && state.parent != null) {
+                console.log(depth-- + '. ' + PlanningManager.actionToString(state.action));
+                state = state.parent;
+            }
+        }
+        else {
+            // Get next states by applying actions to current state.
+            for (var i in validActions) {
+                var validAction = validActions[i];
+                fringe.push({ state: PlanningManager.applyAction(validAction, state.state), action: validAction });
+            }
+
+            // Run against each new child state.
+            for (var i in fringe) {
+                childState = { state: fringe[i].state, parent: state, action: fringe[i].action };
+
+                if (!visited[JSON.stringify(childState.state)]) {
+                    visited[JSON.stringify(childState.state)] = 1;
+
+                    PlanningManager.run(domain, childState, goalState, depth + 1);
+                }
+            }
+        }
     }
 };
 
@@ -314,11 +363,13 @@ function main() {
         // Load the problem.
         PlanningManager.loadProblem(function(problem) {
             // Get all valid actions for the initial state.
-            var actions = PlanningManager.applicableActions(domain, problem.states[0]);
+            //var actions = PlanningManager.applicableActions(domain, problem.states[0]);
 
-            console.log(util.inspect(actions, true, 100, true));
+            //console.log(util.inspect(actions, true, 100, true));
+            PlanningManager.run(domain, { state: problem.states[0], parent: null }, problem.states[1], 0);        
         });
     });
 }
 
+var visited = {};
 main();
