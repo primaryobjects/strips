@@ -4,7 +4,8 @@
   "description": "Example of AI planning using STRIPS and PDDL.",
   "version": "0.0.1",
   "dependencies": {
-	"pegjs": "*"
+	"pegjs": "*",
+  "js-combinatorics": "*"
   },
   "engines": {
     "node": "*",
