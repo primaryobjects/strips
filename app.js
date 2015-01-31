@@ -75,6 +75,7 @@ StripsManager = {
     },
 
     predicateCombinations: function(state) {
+        // For "Blocks World" problems, combinatorics.permutationCombination(state) is sufficient and faster, but otherwise, baseN(state) gives the full range of possible parameter values.
         var cmb = combinatorics.baseN(state);
 
         return cmb.toArray();
@@ -211,7 +212,7 @@ StripsManager = {
 
         // Get all action combinations for the current state.
         var cases = StripsManager.predicateCombinations(domain.objects);
-        
+
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
             var parameters = action.parameters; // x1, x2, x3
