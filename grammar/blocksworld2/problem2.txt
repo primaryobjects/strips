@@ -1,0 +1,6 @@
+(define (problem stack-blocks-from-stacked-b-a-to-stacked-a-b-table-y)
+    (:domain blocksworld)
+  (:init (and (block a) (block b) (table x) (table y)
+         (on a x) (on b a) (clear b)))
+  (:goal (and (on b y) (on a b) (clear a) not (clear b)))
+)
