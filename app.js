@@ -3,7 +3,7 @@ var PEG = require("pegjs");
 var util = require('util');
 var combinatorics = require('./node_modules/js-combinatorics/combinatorics.js').Combinatorics;
 
-PlanningManager = {
+StripsManager = {
     load: function(grammarFileName, codeFileName, callback) {
         // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
@@ -21,18 +21,18 @@ PlanningManager = {
         });
     },
 
-    loadDomain: function(callback) {
+    loadDomain: function(filePath, callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-domain.txt', './grammar/blocksworld1/domain.txt', function(result) {
+        StripsManager.load('./grammar/grammar-domain.txt', filePath, function(result) {
             if (callback) {
                 callback(result);
             }
         });
     },
 
-    loadProblem: function(callback) {
+    loadProblem: function(filePath, callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-problem.txt', './grammar/blocksworld1/problem.txt', function(result) {
+        StripsManager.load('./grammar/grammar-problem.txt', filePath, function(result) {
             if (callback) {
                 callback(result);
             }
@@ -61,11 +61,34 @@ PlanningManager = {
         return count;
     },
     
+    isEqual: function(action1, action2) {
+        // Returns true if action1 == action2. Compares name and parameters.
+        var result = false;
+
+        // Find matching action name.
+        if (action1.action == action2.action && action1.parameters.length == action2.parameters.length) {
+            result = true;
+
+            // Find matching parameters.
+            for (var k in action1.parameters) {
+                var parameter1 = action1.parameters[k];
+                var parameter2 = action2.parameters[k];
+
+                if (parameter1 != parameter2) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+
+        return result;
+    },
+    
     isPreconditionSatisfied: function(state, precondition) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
         var matchCount = 0;
-        var andCount = PlanningManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
+        var andCount = StripsManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
 
         for (var i = 0; i < precondition.length; i++) {
             // Find a case that contains this action and parameters.
@@ -111,7 +134,7 @@ PlanningManager = {
         var resolvedAction = null;
 
         // Does the filled-in precondition exist in the state test cases?
-        if (PlanningManager.isPreconditionSatisfied(state, action.precondition)) {
+        if (StripsManager.isPreconditionSatisfied(state, action.precondition)) {
             // This action is applicable.
             // Assign a value to each parameter of the effect.
             var populatedEffect = JSON.parse(JSON.stringify(action.effect));
@@ -146,7 +169,7 @@ PlanningManager = {
         var result = [];
 
         // Get all action combinations for the current state.
-        var cases = PlanningManager.predicateCombinations(['a', 'b', 'x', 'y']); // TODO: LOAD THESE FROM PROBLEM SPACE.
+        var cases = StripsManager.predicateCombinations(['a', 'b', 'x', 'y']); // TODO: LOAD THESE FROM PROBLEM SPACE.
         
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
@@ -188,33 +211,10 @@ PlanningManager = {
                 }
 
                 // Does the filled-in precondition exist in the test cases?
-                var applicableAction = PlanningManager.getApplicableActionInState(state, populatedAction);
+                var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction);
                 if (applicableAction) {
                     // This action is applicable in this state.
                     result.push(applicableAction);
-                }
-            }
-        }
-
-        return result;
-    },
-
-    isEqual: function(action1, action2) {
-        // Returns true if action1 == action2. Compares name and parameters.
-        var result = false;
-
-        // Find matching action name.
-        if (action1.action == action2.action && action1.parameters.length == action2.parameters.length) {
-            result = true;
-
-            // Find matching parameters.
-            for (var k in action1.parameters) {
-                var parameter1 = action1.parameters[k];
-                var parameter2 = action2.parameters[k];
-
-                if (parameter1 != parameter2) {
-                    result = false;
-                    break;
                 }
             }
         }
@@ -235,7 +235,7 @@ PlanningManager = {
                 var isExists = false;
                 for (var j in state.actions) {
                     // Find matching action.
-                    if (PlanningManager.isEqual(state.actions[j], actionOperation)) {
+                    if (StripsManager.isEqual(state.actions[j], actionOperation)) {
                         isExists = true;
                         break;
                     }
@@ -250,7 +250,7 @@ PlanningManager = {
                 // Remove this predicate from the state.
                 for (var j in state.actions) {
                     // Find matching action.
-                    if (PlanningManager.isEqual(state.actions[j], actionOperation)) {
+                    if (StripsManager.isEqual(state.actions[j], actionOperation)) {
                         // This is our target, remove it.
                         result.actions.splice(j, 1);
                     }
@@ -259,6 +259,19 @@ PlanningManager = {
         }
 
         return result;
+    },
+
+    getChildStates: function(domain, state) {
+        // Returns the list of child states for the current state, after applying all applicable actions.
+        var children = [];
+
+        var actions = StripsManager.applicableActions(domain, state);
+        for (var i in actions) {
+            var action = actions[i];
+            children.push({ state: StripsManager.applyAction(action, state), action: action });
+        }
+
+        return children;
     },
 
     isGoal: function(state, goalState) {
@@ -273,7 +286,7 @@ PlanningManager = {
                 // Make sure this action exists in the state.
                 var isExists = false;
                 for (var j in state.actions) {
-                    if (PlanningManager.isEqual(state.actions[j], goalAction)) {
+                    if (StripsManager.isEqual(state.actions[j], goalAction)) {
                         isExists = true;
                         break;
                     }
@@ -289,7 +302,7 @@ PlanningManager = {
                 // Make sure this action does not exist in the state.
                 var isExists = false;
                 for (var j in state.actions) {
-                    if (PlanningManager.isEqual(state.actions[j], goalAction)) {
+                    if (StripsManager.isEqual(state.actions[j], goalAction)) {
                         // This is our target, so it fails the goal test.
                         isExists = true;
                         break;
@@ -317,35 +330,36 @@ PlanningManager = {
         return result;
     },
 
-    run: function(domain, state, goalState, depth) {
-        var validActions = PlanningManager.applicableActions(domain, state.state);
-        var fringe = [];
-        var childState = null;
+    solve: function(domain, problem) {
+        StripsManager.run(domain, { state: problem.states[0] }, problem.states[1]);
+    },
 
-        if (PlanningManager.isGoal(state.state, goalState)) {
+    run: function(domain, state, goalState, visited, depth) {
+        visited = visited || {};
+        depth = depth || 0;
+
+        if (StripsManager.isGoal(state.state, goalState)) {
             console.log('*** Solution found in ' + depth + ' steps!');
 
             // Compile solution path.
             while (state != null && state.parent != null) {
-                console.log(depth-- + '. ' + PlanningManager.actionToString(state.action));
+                console.log(depth-- + '. ' + StripsManager.actionToString(state.action));
                 state = state.parent;
             }
         }
         else {
-            // Get next states by applying actions to current state.
-            for (var i in validActions) {
-                var validAction = validActions[i];
-                fringe.push({ state: PlanningManager.applyAction(validAction, state.state), action: validAction });
-            }
+            // Get child states by applying actions to current state.
+            var fringe = StripsManager.getChildStates(domain, state.state);
 
             // Run against each new child state.
             for (var i in fringe) {
-                childState = { state: fringe[i].state, parent: state, action: fringe[i].action };
+                var child = fringe[i];
+                child.parent = state;
+                var key = JSON.stringify(child.state);
 
-                if (!visited[JSON.stringify(childState.state)]) {
-                    visited[JSON.stringify(childState.state)] = 1;
-
-                    PlanningManager.run(domain, childState, goalState, depth + 1);
+                if (!visited[key]) {
+                    visited[key] = 1;
+                    StripsManager.run(domain, child, goalState, visited, depth + 1);
                 }
             }
         }
@@ -354,17 +368,13 @@ PlanningManager = {
 
 function main() {
     // Load the domain and actions.
-    PlanningManager.loadDomain(function(domain) {
+    StripsManager.loadDomain('./grammar/blocksworld1/domain.txt', function(domain) {
         // Load the problem.
-        PlanningManager.loadProblem(function(problem) {
-            // Get all valid actions for the initial state.
-            //var actions = PlanningManager.applicableActions(domain, problem.states[0]);
-
-            //console.log(util.inspect(actions, true, 100, true));
-            PlanningManager.run(domain, { state: problem.states[0], parent: null }, problem.states[1], 0);        
+        StripsManager.loadProblem('./grammar/blocksworld1/problem.txt', function(problem) {
+            // Run the problem against the domain.
+            StripsManager.solve(domain, problem);
         });
     });
 }
 
-var visited = {};
 main();
