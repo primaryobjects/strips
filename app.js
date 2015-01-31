@@ -33,6 +33,26 @@ StripsManager = {
     loadProblem: function(filePath, callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
         StripsManager.load('./grammar/grammar-problem.txt', filePath, function(result) {
+            // Populate list of parameter values.
+            var values = {};
+            for (var i in result.states) {
+                var state = result.states[i];
+                for (var j in state.actions) {
+                    var action = state.actions[j];
+
+                    // Collect all unique parameter values.
+                    for (var k in action.parameters) {
+                        values[action.parameters[k]] = 1;
+                    }
+                }
+            }
+
+            // Set parameter values list on result.
+            result.objects = [];
+            for (var key in values) {
+                result.objects.push(key);
+            }
+
             if (callback) {
                 callback(result);
             }
@@ -378,7 +398,7 @@ StripsManager = {
     },
 
     run: function(domain, state, goalState, visited, depth) {
-        visited = visited || {};
+        visited = visited ? JSON.parse(JSON.stringify(visited)) : {};
         depth = depth || 0;
 
         // If this is the initial state, add it to the visited list.
@@ -407,7 +427,7 @@ StripsManager = {
                 var key = StripsManager.stateToString(child.state);
 
                 if (!visited[key]) {
-                    visited[key] = 1;                    
+                    visited[key] = 1;
                     StripsManager.run(domain, child, goalState, visited, depth + 1);
                 }
             }
@@ -422,20 +442,6 @@ function main() {
         StripsManager.loadProblem('./grammar/blocksworld3/problem.txt', function(problem) {
             // Run the problem against the domain.
             StripsManager.solve(domain, problem);
-
-//console.log(StripsManager.stateToString(problem.states[0]));
-
-  //          var fringe = StripsManager.getChildStates(domain, problem.states[0]);
-            //for (var i in fringe) {
-  //              console.log(StripsManager.actionToString(fringe[0].action));
-            //}console.log('--');
-
-//console.log(StripsManager.stateToString(fringe[0].state));
-
-/*            fringe = StripsManager.getChildStates(domain, fringe[0].state);
-            for (var i in fringe) {
-                console.log(StripsManager.actionToString(fringe[i].action));
-            }            */
         });
     });
 }
