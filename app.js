@@ -23,7 +23,7 @@ PlanningManager = {
 
     loadDomain: function(callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-domain.txt', './grammar/problem2/domain.txt', function(result) {
+        PlanningManager.load('./grammar/grammar-domain.txt', './grammar/blocksworld1/domain.txt', function(result) {
             if (callback) {
                 callback(result);
             }
@@ -32,7 +32,7 @@ PlanningManager = {
 
     loadProblem: function(callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-        PlanningManager.load('./grammar/grammar-problem.txt', './grammar/problem2/problem.txt', function(result) {
+        PlanningManager.load('./grammar/grammar-problem.txt', './grammar/blocksworld1/problem.txt', function(result) {
             if (callback) {
                 callback(result);
             }
@@ -61,11 +61,6 @@ PlanningManager = {
         return count;
     },
     
-    isPreconditionParametersValid: function(precondition) {
-        // TODO: Verify the parameter values for this precondition are valid for their types.
-        return true;
-    },
-
     isPreconditionSatisfied: function(state, precondition) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
@@ -116,7 +111,7 @@ PlanningManager = {
         var resolvedAction = null;
 
         // Does the filled-in precondition exist in the state test cases?
-        if (PlanningManager.isPreconditionParametersValid(action.precondition) && PlanningManager.isPreconditionSatisfied(state, action.precondition)) {
+        if (PlanningManager.isPreconditionSatisfied(state, action.precondition)) {
             // This action is applicable.
             // Assign a value to each parameter of the effect.
             var populatedEffect = JSON.parse(JSON.stringify(action.effect));
@@ -151,7 +146,7 @@ PlanningManager = {
         var result = [];
 
         // Get all action combinations for the current state.
-        var cases = PlanningManager.predicateCombinations(['A', 'B', 'C']); // TODO: LOAD THESE FROM PROBLEM SPACE.
+        var cases = PlanningManager.predicateCombinations(['a', 'b', 'x', 'y']); // TODO: LOAD THESE FROM PROBLEM SPACE.
         
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
