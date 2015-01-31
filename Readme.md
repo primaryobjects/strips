@@ -5,7 +5,7 @@ Implementing a basic example of artificial intelligence planning using STRIPS an
 
 This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks in a certain way or Towers of Hanoi could both be encoded within the problem and domain to be solved by the AI.
 
-Several examples from the [Blocks World](http://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml) domain are included in this project. The AI is able to successfully plan a series of steps to move a stack of blocks B,A from Table 1 to a stack A,B on Table 3. When only 1 stack is permitted per table, the AI uses Table 2 as an intermediary.
+Several examples from the [Blocks World](http://en.wikipedia.org/wiki/Blocks_world) domain are included in this project. The AI is able to successfully plan a series of steps to move a stack of blocks B,A from Table 1 to a stack A,B on Table 3. When only 1 stack is permitted per table, the AI uses Table 2 as an intermediary.
 
 The AI planning works by processing a simple [domain](https://gist.github.com/primaryobjects/22363e71112d716ea183) using a PEG.js grammar sheet and runs the result using a simple STRIPS [problem](https://gist.github.com/primaryobjects/6f39bf5497b7f52cf17a).
 
@@ -38,7 +38,7 @@ The fun one! Unstack blocks ba from table 1 to a stack ab on table 3. Only one b
 
 ## Example Output from Blocks World Problem #3b
 
-Blocks are stacked ab on table 1. The goal is to stack them ab on table 2. Only one block or stack is permitted per table.
+[Blocks](http://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml) are stacked ab on table 1. The [goal](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/problem2.txt) is to stack them ab on table 2. Only one block or stack is permitted per table. Here are the solutions:
 
 ```
 *** Solution found in 6 steps!
