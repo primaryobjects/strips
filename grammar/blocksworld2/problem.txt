@@ -1,4 +1,4 @@
-(define (problem stack-blocks-a-b-on-table-y)
+(define (problem stack-blocks-a-b-from-tablex-to-ab-tabley)
     (:domain blocksworld)
   (:init (and (block a) (block b) (table x) (table y)
          (on a x) (on b x) (clear a) (clear b)))

@@ -170,7 +170,7 @@ StripsManager = {
         var result = [];
 
         // Get all action combinations for the current state.
-        var cases = StripsManager.predicateCombinations(['a', 'b', 'x', 'y']); // TODO: LOAD THESE FROM PROBLEM SPACE.
+        var cases = StripsManager.predicateCombinations(['a', 'b', 't1', 't2', 't3']); // TODO: LOAD THESE FROM PROBLEM SPACE.
         
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
@@ -263,8 +263,12 @@ StripsManager = {
                 for (var j in state.actions) {
                     // Find matching action.
                     if (StripsManager.isEqual(state.actions[j], actionOperation)) {
-                        // This is our target, remove it.
-                        result.actions.splice(j, 1);
+                        // This is our target. Find the same item in our result list (since result may now have different indices than state.actions, if new actions were added via 'and').
+                        for (var k in result.actions) {
+                            if (StripsManager.isEqual(state.actions[j], result.actions[k])) {
+                                result.actions.splice(k, 1);
+                            }
+                        }
                     }
                 }
             }
@@ -413,11 +417,25 @@ StripsManager = {
 
 function main() {
     // Load the domain and actions.
-    StripsManager.loadDomain('./grammar/blocksworld1/domain.txt', function(domain) {
+    StripsManager.loadDomain('./grammar/blocksworld3/domain.txt', function(domain) {
         // Load the problem.
-        StripsManager.loadProblem('./grammar/blocksworld1/problem.txt', function(problem) {
+        StripsManager.loadProblem('./grammar/blocksworld3/problem.txt', function(problem) {
             // Run the problem against the domain.
             StripsManager.solve(domain, problem);
+
+//console.log(StripsManager.stateToString(problem.states[0]));
+
+  //          var fringe = StripsManager.getChildStates(domain, problem.states[0]);
+            //for (var i in fringe) {
+  //              console.log(StripsManager.actionToString(fringe[0].action));
+            //}console.log('--');
+
+//console.log(StripsManager.stateToString(fringe[0].state));
+
+/*            fringe = StripsManager.getChildStates(domain, fringe[0].state);
+            for (var i in fringe) {
+                console.log(StripsManager.actionToString(fringe[i].action));
+            }            */
         });
     });
 }
