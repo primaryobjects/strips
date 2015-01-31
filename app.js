@@ -71,8 +71,9 @@ StripsManager = {
 
             // Find matching parameters.
             for (var k in action1.parameters) {
-                var parameter1 = action1.parameters[k];
-                var parameter2 = action2.parameters[k];
+                // Use the map, if available (in the case of a non-concrete action). Otherwise, use the concrete parameter values.
+                var parameter1 = action1.map ? action1.map[action1.parameters[k]] : action1.parameters[k];
+                var parameter2 = action2.map ? action2.map[action2.parameters[k]] : action2.parameters[k];
 
                 if (parameter1 != parameter2) {
                     result = false;
@@ -80,10 +81,10 @@ StripsManager = {
                 }
             }
         }
-
+        
         return result;
     },
-    
+
     isPreconditionSatisfied: function(state, precondition) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
@@ -213,8 +214,19 @@ StripsManager = {
                 // Does the filled-in precondition exist in the test cases?
                 var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction);
                 if (applicableAction) {
-                    // This action is applicable in this state.
-                    result.push(applicableAction);
+                    // This action is applicable in this state. Make sure we haven't already found this one.
+                    var isDuplicate = false;
+                    for (var rr in result) {
+                        var action1 = result[rr];
+                        if (StripsManager.isEqual(applicableAction, action1)) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+
+                    if (!isDuplicate) {
+                        result.push(applicableAction);
+                    }
                 }
             }
         }
@@ -330,6 +342,33 @@ StripsManager = {
         return result;
     },
 
+    stateToString: function(state) {
+        var result = '';
+        var actionList = [];
+
+        for (var i in state.actions) {
+            var action = state.actions[i];
+
+            var actionString = '(' + action.action;
+            for (var j in action.parameters) {
+                actionString += ' ' + action.parameters[j];
+            }
+            actionString += ')';
+
+            // Keep a list of actions so we can sort them. This allows two states with different orderings of the same actions to result in the same string.
+            actionList.push(actionString);
+        }
+
+        for (var i in actionList.sort()) {
+            if (i > 0) {
+                result += ' ';
+            }
+            result += actionList[i];
+        }
+
+        return result;
+    },
+
     solve: function(domain, problem) {
         StripsManager.run(domain, { state: problem.states[0] }, problem.states[1]);
     },
@@ -338,6 +377,12 @@ StripsManager = {
         visited = visited || {};
         depth = depth || 0;
 
+        // If this is the initial state, add it to the visited list.
+        if (Object.keys(visited).length == 0) {
+            visited[StripsManager.stateToString(state.state)] = 1;
+        }
+
+        // Check for goal.
         if (StripsManager.isGoal(state.state, goalState)) {
             console.log('*** Solution found in ' + depth + ' steps!');
 
@@ -355,10 +400,10 @@ StripsManager = {
             for (var i in fringe) {
                 var child = fringe[i];
                 child.parent = state;
-                var key = JSON.stringify(child.state);
+                var key = StripsManager.stateToString(child.state);
 
                 if (!visited[key]) {
-                    visited[key] = 1;
+                    visited[key] = 1;                    
                     StripsManager.run(domain, child, goalState, visited, depth + 1);
                 }
             }

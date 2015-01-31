@@ -11,7 +11,7 @@
      )
   (:action unstack
      :parameters (?a ?b ?t1)
-     :precondition (and (block ?a) (block ?b) (table ?t1) (clear ?a) (on ?a ?b))
+     :precondition (and (block ?a) (block ?b) (table ?t1) (on ?b ?t1) (clear ?a) (on ?a ?b))
      :effect (and (on ?a ?t1) not (on ?a ?b) (clear ?b))
      )
 )
