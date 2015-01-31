@@ -4,7 +4,7 @@ var util = require('util');
 var combinatorics = require('./node_modules/js-combinatorics/combinatorics.js').Combinatorics;
 
 StripsManager = {
-    load: function(grammarFileName, codeFileName, callback) {
+    loadGrammar: function(grammarFileName, codeFileName, callback) {
         // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
             if (err) throw err;
@@ -23,7 +23,7 @@ StripsManager = {
 
     loadDomain: function(filePath, callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-        StripsManager.load('./grammar/grammar-domain.txt', filePath, function(result) {
+        StripsManager.loadGrammar('./grammar/grammar-domain.txt', filePath, function(result) {
             if (callback) {
                 callback(result);
             }
@@ -32,7 +32,7 @@ StripsManager = {
 
     loadProblem: function(filePath, callback) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-        StripsManager.load('./grammar/grammar-problem.txt', filePath, function(result) {
+        StripsManager.loadGrammar('./grammar/grammar-problem.txt', filePath, function(result) {
             // Populate list of parameter values.
             var values = {};
             for (var i in result.states) {
@@ -59,6 +59,21 @@ StripsManager = {
         });
     },
     
+    load: function(domainPath, problemPath, callback) {
+        // Load the domain and actions.
+        StripsManager.loadDomain(domainPath, function(domain) {
+            // Load the problem.
+            StripsManager.loadProblem(problemPath, function(problem) {
+                // Give a copy of the possible parameter values to the domain.
+                domain.objects = problem.objects;
+
+                if (callback) {
+                    callback(domain, problem);
+                }
+            });
+        });
+    },
+
     predicateCombinations: function(state) {
         var cmb = combinatorics.baseN(state);
 
@@ -185,12 +200,17 @@ StripsManager = {
     },
     
     applicableActions: function(domain, state) {
-        // Returns an array of applicable concrete actions for the current state.
+        // Returns an array of applicable concrete actions for the current state, using the possible parameter values in domain.objects array (Example: objects = ['a', 'b', 't1', 't2', 't3']).
         // Test each domain action precondition against the cases. If one holds valid, then that action is applicable in the current state.
         var result = [];
 
+        if (!domain.objects || domain.objects.length == 0) {
+            console.log('ERROR: No parameter values found in domain.objects.');
+            return;
+        }
+
         // Get all action combinations for the current state.
-        var cases = StripsManager.predicateCombinations(['a', 'b', 't1', 't2', 't3']); // TODO: LOAD THESE FROM PROBLEM SPACE.
+        var cases = StripsManager.predicateCombinations(domain.objects);
         
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
@@ -394,6 +414,7 @@ StripsManager = {
     },
 
     solve: function(domain, problem) {
+        // Find solution.
         StripsManager.run(domain, { state: problem.states[0] }, problem.states[1]);
     },
 
@@ -436,13 +457,10 @@ StripsManager = {
 };
 
 function main() {
-    // Load the domain and actions.
-    StripsManager.loadDomain('./grammar/blocksworld3/domain.txt', function(domain) {
-        // Load the problem.
-        StripsManager.loadProblem('./grammar/blocksworld3/problem.txt', function(problem) {
-            // Run the problem against the domain.
-            StripsManager.solve(domain, problem);
-        });
+    // Load the domain and problem.
+    StripsManager.load('./grammar/blocksworld3/domain.txt', './grammar/blocksworld3/problem.txt', function(domain, problem) {
+        // Run the problem against the domain.
+        StripsManager.solve(domain, problem);
     });
 }
 
