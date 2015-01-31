@@ -18,7 +18,7 @@ The domain and problem PDDL files are parsed via PEG.js, producing a JSON [objec
 - Apply actions on current state to produce child states.
 - Repeat until goal state is found.
 
-## Example Blocks World Problem
+## Example Blocks World Problems
 
 [Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/domain.txt) | 
 [Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/problem.txt)
