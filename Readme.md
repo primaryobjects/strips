@@ -20,25 +20,25 @@ The domain and problem PDDL files are parsed via PEG.js, producing a JSON [objec
 
 ## Example Blocks World Problems
 
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/problem.txt)
+[Domain](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld1/domain.txt) | 
+[Problem](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld1/problem.txt)
 Move blocks a, b from table x to table y. Multiple blocks are permitted on a table. The only available action is "move".
 
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/problem.txt)
+[Domain](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld2/domain.txt) | 
+[Problem](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld2/problem.txt)
 Moves blocks a, b from table x to a stack ab on table y. Multiple blocks are permitted on a table. Available actions include "move", "stack", and "unstack".
 
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/problem2.txt)
+[Domain](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld2/domain.txt) | 
+[Problem](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld2/problem2.txt)
 Unstacks blocks ba from table x to a stack ab on table y. Multiple blocks are permitted on a table. Available actions include "move", "stack", and "unstack".
 
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/problem.txt)
+[Domain](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld3/domain.txt) | 
+[Problem](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld3/problem.txt)
 The fun one! Unstack blocks ba from table 1 to a stack ab on table 3. Only one block or stack is permitted on a table. The AI needs to plan for moving a block temporarily to table 2, while it sets up the correct order for stacking on table 3. Available actions include "move", "stack", and "unstack".
 
 ## Example Output from Blocks World Problem #3
 
-[Blocks](http://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml) are stacked ab on table 1. The [goal](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/problem2.txt) is to stack them ab on table 2. Only one block or stack is permitted per table. Here are the solutions.
+[Blocks](http://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml) are stacked ab on table 1. The [goal](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld3/problem2.txt) is to stack them ab on table 2. Only one block or stack is permitted per table. Here are the solutions.
 
 ```
 *** Solution found in 6 steps!
@@ -78,7 +78,7 @@ The fun one! Unstack blocks ba from table 1 to a stack ab on table 3. Only one b
 
 ## Sussman Anomaly Solution
 
-Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld5/problem.txt) for the Blocks World [Sussman Anomaly](http://en.wikipedia.org/wiki/Sussman_Anomaly).
+Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld5/problem.txt) for the Blocks World [Sussman Anomaly](http://en.wikipedia.org/wiki/Sussman_Anomaly).
 
 ```
 *** Solution found in 3 steps!
@@ -89,12 +89,12 @@ Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master
 
 ## Starcraft!
 
-Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
+Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
 
-![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
-![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/supply-depot.jpg)
-![Collect Minerals 2](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
-![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/barracks.jpg)
+![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
+![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/supply-depot.jpg)
+![Collect Minerals 2](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
+![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/barracks.jpg)
 
 ```
 *** Solution found in 8 steps!
