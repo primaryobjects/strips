@@ -42,38 +42,38 @@ The fun one! Unstack blocks ba from table 1 to a stack ab on table 3. Only one b
 
 ```
 *** Solution found in 6 steps!
-6. stack a t3 b t2
+1. unstack a b t1 t2
+2. move b t1 t3
+3. move a t2 t1
+4. move b t3 t2
 5. move a t1 t3
-4. move b t3 t2
-3. move a t2 t1
-2. move b t1 t3
-1. unstack a b t1 t2
+6. stack a t3 b t2
 *** Solution found in 5 steps!
-5. stack a t1 b t2
-4. move b t3 t2
-3. move a t2 t1
-2. move b t1 t3
 1. unstack a b t1 t2
-*** Solution found in 5 steps!
+2. move b t1 t3
+3. move a t2 t1
+4. move b t3 t2
 5. stack a t1 b t2
+*** Solution found in 5 steps!
+1. unstack a b t1 t2
+2. move a t2 t3
+3. move b t1 t2
 4. move a t3 t1
-3. move b t1 t2
-2. move a t2 t3
-1. unstack a b t1 t2
+5. stack a t1 b t2
 *** Solution found in 4 steps!
+1. unstack a b t1 t2
+2. move a t2 t3
+3. move b t1 t2
 4. stack a t3 b t2
-3. move b t1 t2
-2. move a t2 t3
-1. unstack a b t1 t2
 *** Solution found in 4 steps!
-4. stack a t1 b t2
+1. unstack a b t1 t3
+2. move b t1 t2
 3. move a t3 t1
-2. move b t1 t2
-1. unstack a b t1 t3
+4. stack a t1 b t2
 *** Solution found in 3 steps!
-3. stack a t3 b t2
-2. move b t1 t2
 1. unstack a b t1 t3
+2. move b t1 t2
+3. stack a t3 b t2
 ```
 
 ## Sussman Anomaly Solution
@@ -82,9 +82,9 @@ Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master
 
 ```
 *** Solution found in 3 steps!
-3. stack3 a b c x
-2. stack2 b c x
 1. unstack2 c a x
+2. stack2 b c x
+3. stack3 a b c x
 ```
 
 ## Starcraft!
@@ -98,14 +98,14 @@ Just because we can! Here is the Starcraft [domain](https://github.com/primaryob
 
 ```
 *** Solution found in 8 steps!
-8. build-barracks scv sector-a sector-b
-7. move scv mineral-field-a sector-a
-6. collect-minerals scv mineral-field-a
-5. move scv sector-b mineral-field-a
-4. build-supply-depot scv sector-b
-3. move scv mineral-field-b sector-b
-2. collect-minerals scv mineral-field-b
 1. move scv sector-a mineral-field-b
+2. collect-minerals scv mineral-field-b
+3. move scv mineral-field-b sector-b
+4. build-supply-depot scv sector-b
+5. move scv sector-b mineral-field-a
+6. collect-minerals scv mineral-field-a
+7. move scv mineral-field-a sector-a
+8. build-barracks scv sector-a sector-b
 ```
 
 License
