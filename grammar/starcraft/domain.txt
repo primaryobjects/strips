@@ -7,7 +7,7 @@
   (:action collect-minerals
      :parameters (?b ?t1)
      :precondition (and (scv ?b) (location ?t1) (minerals ?t1) (not (empty ?t1)) (at ?b ?t1))
-     :effect (and (empty ?t1) (minerals ?b) not (minerals ?t1)))
+     :effect (and (empty ?t1) (minerals ?b)))
   (:action build-supply-depot
      :parameters (?b ?t1)
      :precondition (and (scv ?b) (location ?t1) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
