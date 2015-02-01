@@ -1,13 +1,17 @@
-var strips = require('./lib/strips');
+var strips = require('strips');
 
 // Load the domain and problem.
-strips.load('./grammar/blocksworld3/domain.txt', './grammar/blocksworld3/problem2.txt', function(domain, problem) {
+strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/problem.txt', function(domain, problem) {
     // Run the problem against the domain.
-    var path = strips.solve(domain, problem);
-    if (path) {
-        console.log('* Solution found in ' + path.steps + ' steps!');
-        for (var i in path) {
-            console.log(path[i].step + '. ' + path[i].action);
-        }
+    var solutions = strips.solve(domain, problem);
+
+    // Display each solution.
+    for (var i in solutions) {
+        var solution = solutions[i];
+
+        console.log('- Solution found in ' + solution.steps + ' steps!');
+        for (var i = 0; i < solution.path.length; i++) {
+            console.log((i + 1) + '. ' + solution.path[i]);
+        }        
     }
 });
