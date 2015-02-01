@@ -87,6 +87,26 @@ Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master
 1. unstack2 c a x
 ```
 
+## Starcraft!
+
+Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/domain.txt). The task was to build a barracks.
+
+```
+*** Solution found in 8 steps!
+8. build-barracks scv sector-a mineral-field-a
+![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/barracks.jpg)
+7. move scv mineral-field-b sector-a
+6. collect-minerals scv mineral-field-b
+![Collect Minerals 2](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
+5. move scv mineral-field-a mineral-field-b
+4. build-supply-depot scv mineral-field-a
+![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/supply-depot.jpg)
+3. collect-minerals scv mineral-field-a
+![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
+2. move scv sector-b mineral-field-a
+1. move scv sector-a sector-b
+```
+
 License
 ----
 
