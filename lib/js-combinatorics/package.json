@@ -1,0 +1,40 @@
+{
+  "name": "js-combinatorics",
+  "version": "0.4.0",
+  "description": "Simple combinatorics like power set, combination, and permutation in JavaScript",
+  "main": "combinatorics.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "mocha": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dankogai/js-combinatorics.git"
+  },
+  "keywords": [
+    "Combinatorics",
+    "combination",
+    "permutation"
+  ],
+  "author": {
+    "name": "Dan Kogai"
+  },
+  "license": "BSD",
+  "readmeFilename": "README.md",
+  "gitHead": "e3684eb54f7c6fbb24bb7a4d08d88671ce12e9eb",
+  "readme": "[![build status](https://secure.travis-ci.org/dankogai/js-combinatorics.png)](http://travis-ci.org/dankogai/js-combinatorics)\n\ncombinatorics.js\n===============\n\nSimple combinatorics like power set, combination, and permutation in JavaScript\n\nSYNOPSIS\n--------\n\n### In Browser\n````\n<script src=\"combinatorics.js\"></script>\n````\n### node.js\n````\nvar Combinatorics = require('./combinatorics.js').Combinatorics;\n````\n\nUsage\n-----\n\n### power set\n````\nvar cmb, a;\ncmb = Combinatorics.power(['a','b','c']);\ncmb.each(function(a){ console.log(a) });\n//  []\n//  [\"a\"]\n//  [\"b\"]\n//  [\"a\", \"b\"]\n//  [\"c\"]\n//  [\"a\", \"c\"]\n//  [\"b\", \"c\"]\n//  [\"a\", \"b\", \"c\"]\n````\n\n### combination\n````\ncmb = Combinatorics.combination(['a','b','c','d'], 2);\nwhile(a = cmb.next()) console.log(a);\n//  [\"a\", \"b\"]\n//  [\"a\", \"c\"]\n//  [\"a\", \"d\"]\n//  [\"b\", \"c\"]\n//  [\"b\", \"d\"]\n//  [\"c\", \"d\"]\n````\n### permutation\n````\ncmb = Combinatorics.permutation(['a','b','c','d']); // assumes 4\nconsole.log(cmb.toArray());\n//  [\n  [\"a\",\"b\",\"c\",\"d\"],[\"a\",\"b\",\"d\",\"c\"],[\"a\",\"c\",\"b\",\"d\"],[\"a\",\"c\",\"d\",\"b\"],\n  [\"a\",\"d\",\"b\",\"c\"],[\"a\",\"d\",\"c\",\"b\"],[\"b\",\"a\",\"c\",\"d\"],[\"b\",\"a\",\"d\",\"c\"],\n  [\"b\",\"c\",\"a\",\"d\"],[\"b\",\"c\",\"d\",\"a\"],[\"b\",\"d\",\"a\",\"c\"],[\"b\",\"d\",\"c\",\"a\"],\n  [\"c\",\"a\",\"b\",\"d\"],[\"c\",\"a\",\"d\",\"b\"],[\"c\",\"b\",\"a\",\"d\"],[\"c\",\"b\",\"d\",\"a\"],\n  [\"c\",\"d\",\"a\",\"b\"],[\"c\",\"d\",\"b\",\"a\"],[\"d\",\"a\",\"b\",\"c\"],[\"d\",\"a\",\"c\",\"b\"],\n  [\"d\",\"b\",\"a\",\"c\"],[\"d\",\"b\",\"c\",\"a\"],[\"d\",\"c\",\"a\",\"b\"],[\"d\",\"c\",\"b\",\"a\"]\n]\n````\n\n### permutation of combination\n````\ncmb = Combinatorics.permutationCombination(['a','b','c']);\nconsole.log(cmb.toArray());\n// [ \n  [ 'a' ],\n  [ 'b' ],\n  [ 'c' ],\n  [ 'a', 'b' ],\n  [ 'b', 'a' ],\n  [ 'a', 'c' ],\n  [ 'c', 'a' ],\n  [ 'b', 'c' ],\n  [ 'c', 'b' ],\n  [ 'a', 'b', 'c' ],\n  [ 'a', 'c', 'b' ],\n  [ 'b', 'a', 'c' ],\n  [ 'b', 'c', 'a' ],\n  [ 'c', 'a', 'b' ],\n  [ 'c', 'b', 'a' ] ]\n````\n\n### cartesian product\n````\ncp = Combinatorics.cartesianProduct([0, 1, 2], [0, 10, 20], [0, 100, 200]);\nconsole.log(cp.toArray());\n//  [\n  [0, 0, 0],   [1, 0, 0],   [2, 0, 0],\n  [0, 10, 0],  [1, 10, 0],  [2, 10, 0],\n  [0, 20, 0],  [1, 20, 0],  [2, 20, 0],\n  [0, 0, 100], [1, 0, 100], [2, 0, 100],\n  [0, 10, 100],[1, 10, 100],[2, 10, 100],\n  [0, 20, 100],[1, 20, 100],[2, 20, 100],\n  [0, 0, 200], [1, 0, 200], [2, 0, 200],\n  [0, 10, 200],[1, 10, 200],[2, 10, 200],\n  [0, 20, 200],[1, 20, 200],[2, 20, 200]\n]\n````\n\n### base N\n\n````\nbaseN = Combinatorics.baseN(['a','b','c'], 3);\nconsole.log(baseN.toArray())\n// [ \n  [ 'a', 'a', 'a' ],\n  [ 'b', 'a', 'a' ],\n  [ 'c', 'a', 'a' ],\n  [ 'a', 'b', 'a' ],\n  [ 'b', 'b', 'a' ],\n  [ 'c', 'b', 'a' ],\n  [ 'a', 'c', 'a' ],\n  [ 'b', 'c', 'a' ],\n  [ 'c', 'c', 'a' ],\n  [ 'a', 'a', 'b' ],\n  [ 'b', 'a', 'b' ],\n  [ 'c', 'a', 'b' ],\n  [ 'a', 'b', 'b' ],\n  [ 'b', 'b', 'b' ],\n  [ 'c', 'b', 'b' ],\n  [ 'a', 'c', 'b' ],\n  [ 'b', 'c', 'b' ],\n  [ 'c', 'c', 'b' ],\n  [ 'a', 'a', 'c' ],\n  [ 'b', 'a', 'c' ],\n  [ 'c', 'a', 'c' ],\n  [ 'a', 'b', 'c' ],\n  [ 'b', 'b', 'c' ],\n  [ 'c', 'b', 'c' ],\n  [ 'a', 'c', 'c' ],\n  [ 'b', 'c', 'c' ],\n  [ 'c', 'c', 'c' ]\n]\n````\n\n### Arithmetic Functions\n\n+ .`P(m, n)`\n  calculates m P n\n+ .`C(m, n)`\n  calculates m C n\n+ .`factorial(n)`\n  calculates `n!`\n+ .`factoradic(n)`\n  returns the factoradic representation of n in array, *in least significant order*.  See\n  http://en.wikipedia.org/wiki/Factorial_number_system\n\n\nDESCRIPTION\n-----------\n\nAll methods create _generators_.  Instead of creating all elements at once, each element is created on demand.  So it is memory efficient even when you need to iterate through millions of elements.\n\n#### Combinatorics.power( _ary_ )\n\nCreates a generator which generates the power set of _ary_\n\n#### Combinatorics.combination( _ary_ , _nelem_ )\n\nCreates a generator which generates the combination of _ary_ with _nelem_ elements.\nWhen _nelem_ is ommited, _ary_.length is used.\n\n#### Combinatorics.permutation( _ary_, _nelem_ )\n\nCreates a generator which generates the permutation of _ary_ with _nelem_ elements.\nWhen _nelem_ is ommited, _ary_.length is used.\n\n#### Combinatorics.permutationCombination( _ary_)\n\nCreates a generator which generates the permutation of the combination of _ary_.\nEquivalent to\n`Combinatorics.permutation(Combinatorics.combination(ary))`\nbut more efficient.\n\n#### Combinatorics.cartesianProduct( _ary0_, ...)\n\nCreates a generator which generates the cartesian product of the arrays.  All arguments must be arrays with more than one element.\n\n#### Combinatorics.baseN( _ary_ , _nelem_ )\n\nCreates a generator which generates _nelem_ -digit \"numbers\" where each digit is element in _ary_ .\nNote this \"number\" is in least significant order.\n\nWhen _nelem_ is ommited, _ary_.length is used.\n\n### Generator Methods\n\nAll generators have following methods:\n\n#### .next()\n\nReturns the element or `undefined` if no more element is available.\n\n#### .forEach(function(a){ ... });\n\nApplies the callback function for each element.\n\n#### .toArray()\n\nAll elements at once.\n\n#### .map(function(a){ ... })\n\nAll elements at once with function f applied to each element.\n\n#### .filter(function(a){ ... })\n\nReturns an array with elements that passes the filter function.\nFor example, you can redefine combination as follows:\n\n````\nmyCombination = function(ary, n) {\n  return Combinatorics.power(ary).filter(function (a) {\n    return a.length === n;\n  });\n};\n````\n\n#### .length\n\nReturns the number of elements to be generated\nWhich equals to _generator_`.toArray().length` but it is precalculated without actually generating elements.\nHandy when you prepare for large iteraiton.\n\n#### 0 + _generator_\n\nSame as _generator_`.length`\n\n#### .nth(n)\n\nReturns the *n*th element (starting 0).  Available for  `power`, `cartesianProduct` and `baseN`.\n\n#### .get(x0, ...)\n\nAvailable for `cartesianProduct` generator.  Arguments are coordinates in integer.\nArguments can be out of bounds but it returns `undefined` in such cases.\n",
+  "bugs": {
+    "url": "https://github.com/dankogai/js-combinatorics/issues"
+  },
+  "_id": "js-combinatorics@0.4.0",
+  "dist": {
+    "shasum": "9cd90e2d21a9106ac6ef05bf913e8a5ba5b8e045"
+  },
+  "_from": "js-combinatorics@*",
+  "_resolved": "https://registry.npmjs.org/js-combinatorics/-/js-combinatorics-0.4.0.tgz"
+}
