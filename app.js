@@ -1,4 +1,4 @@
-var strips = require('./lib/strips');
+var strips = require('strips');
 
 // Load the domain and problem.
 strips.load('./grammar/blocksworld3/domain.txt', './grammar/blocksworld3/problem.txt', function(domain, problem) {
