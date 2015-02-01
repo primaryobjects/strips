@@ -1,6 +1,0 @@
-(define (problem stack-blocks-stacked-ab-from-table1-to-stacked-ab-table2-onepilepertable)
-    (:domain blocksworld)
-  (:init (and (block a) (block b) (table t1) (table t2) (table t3)
-         (on b t1) (on a b) (clear a) (clear t2) (clear t3)))
-  (:goal (and (on a b) (on b t2)))
-)

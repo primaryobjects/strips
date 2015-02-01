@@ -1,0 +1,48 @@
+{
+  "name": "strips",
+  "version": "0.0.1",
+  "description": "Basic AI planning with STRIPS and PDDL.",
+   "author": {
+    "name": "Kory Becker",
+    "email": "kbecker@primaryobjects.com",
+    "url": "http://www.primaryobjects.com/kory-becker"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/primaryobjects/strips.git"
+  },
+  "main": "./",  
+  "dependencies": {
+    "pegjs": "*"
+  },
+  "engines": {
+    "node": "*",
+    "npm": "*"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "keywords": [
+    "strips",
+    "pddl",
+    "blocks world",
+    "planning",
+    "domain",
+    "planning domain definition language",
+    "artificial intelligence",
+    "ai",
+    "ai planning",
+    "stanford research institute problem solver",
+    "problem solver",
+    "planner",
+    "automated planner",
+    "automated planning",
+    "sussman",
+    "sussman anomaly"
+  ],
+  "_id": "strips@0.0.1",
+  "_from": "strips"
+}

@@ -1,6 +1,0 @@
-(define (problem move-blocks-from-a-to-b)
-    (:domain blocksworld)
-  (:init (and (block a) (block b) (table x) (table y)
-         (on a x) (on b x)))
-  (:goal (and (on a y) (on b y)))
-)

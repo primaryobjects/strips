@@ -1,6 +1,0 @@
-(define (problem sussman-anomaly-b-ca-stacked-to-abc)
-    (:domain blocksworld)
-  (:init (and (block a) (block b) (block c) (table x)
-         (on b x) (on a x) (on c a) (clear b) (clear c)))
-  (:goal (and (on a b) (on b c) (on c x)))
-)
