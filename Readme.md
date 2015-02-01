@@ -89,7 +89,7 @@ Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master
 
 ## Starcraft!
 
-Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/domain.txt). The task was to build a barracks.
+Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
 
 ![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
 ![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/supply-depot.jpg)
