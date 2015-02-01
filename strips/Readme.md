@@ -1,119 +1,146 @@
 ﻿AI Planning with STRIPS
 --------
 
-Implementing a basic example of artificial intelligence planning using STRIPS and PDDL.
+Basic AI planning with STRIPS and PDDL. For details, see the [demo](https://github.com/primaryobjects/strips).
 
-This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI.
-
-Several examples from the [Blocks World](http://en.wikipedia.org/wiki/Blocks_world) domain are included in this project, in which the AI is able to successfully plan the series of steps to move and stack blocks on a series of tables.
-
-The AI planning works by processing a simple [domain](https://gist.github.com/primaryobjects/22363e71112d716ea183) using a PEG.js grammar sheet and runs the result using a simple STRIPS [problem](https://gist.github.com/primaryobjects/6f39bf5497b7f52cf17a).
-
-The domain and problem PDDL files are parsed via PEG.js, producing a JSON [object](https://gist.github.com/primaryobjects/6cb0d14b3bbef3388b7a) for a given domain. The JSON is then processed to identify applicable actions within a given state of the problem. The actions are then applied to the current state, producing a new set of states. This process is repeated, where applicable actions are identified for the new states, applied, and further new states produced. The resulting tree of possible states and actions may then be traversed using the A* algorithm to locate an optimal set of steps to achieve the goal state, as specified in the problem.
-
-## Example Flow of Program
-
-- Start with initial state.
-- Identify valid actions for the current state.
-- Apply actions on current state to produce child states.
-- Repeat until goal state is found.
-
-## Example Blocks World Problems
-
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld1/problem.txt)
-Move blocks a, b from table x to table y. Multiple blocks are permitted on a table. The only available action is "move".
-
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/problem.txt)
-Moves blocks a, b from table x to a stack ab on table y. Multiple blocks are permitted on a table. Available actions include "move", "stack", and "unstack".
-
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld2/problem2.txt)
-Unstacks blocks ba from table x to a stack ab on table y. Multiple blocks are permitted on a table. Available actions include "move", "stack", and "unstack".
-
-[Domain](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/domain.txt) | 
-[Problem](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/problem.txt)
-The fun one! Unstack blocks ba from table 1 to a stack ab on table 3. Only one block or stack is permitted on a table. The AI needs to plan for moving a block temporarily to table 2, while it sets up the correct order for stacking on table 3. Available actions include "move", "stack", and "unstack".
-
-## Example Output from Blocks World Problem #3
-
-[Blocks](http://www.d.umn.edu/~gshute/cs2511/projects/Java/assignment6/blocks/blocks.xhtml) are stacked ab on table 1. The [goal](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld3/problem2.txt) is to stack them ab on table 2. Only one block or stack is permitted per table. Here are the solutions.
+## Install
 
 ```
-*** Solution found in 6 steps!
-6. stack a t3 b t2
-5. move a t1 t3
-4. move b t3 t2
-3. move a t2 t1
-2. move b t1 t3
-1. unstack a b t1 t2
-*** Solution found in 5 steps!
-5. stack a t1 b t2
-4. move b t3 t2
-3. move a t2 t1
-2. move b t1 t3
-1. unstack a b t1 t2
-*** Solution found in 5 steps!
-5. stack a t1 b t2
-4. move a t3 t1
-3. move b t1 t2
-2. move a t2 t3
-1. unstack a b t1 t2
-*** Solution found in 4 steps!
-4. stack a t3 b t2
-3. move b t1 t2
-2. move a t2 t3
-1. unstack a b t1 t2
-*** Solution found in 4 steps!
-4. stack a t1 b t2
-3. move a t3 t1
-2. move b t1 t2
-1. unstack a b t1 t3
-*** Solution found in 3 steps!
-3. stack a t3 b t2
-2. move b t1 t2
-1. unstack a b t1 t3
+npm install strips
 ```
 
-## Sussman Anomaly Solution
+## Usage
 
-Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master/grammar/blocksworld5/problem.txt) for the Blocks World [Sussman Anomaly](http://en.wikipedia.org/wiki/Sussman_Anomaly).
+You'll first need to have a domain and problem file in PDDL format. You can create these yourself (see [examples](https://github.com/primaryobjects/strips/tree/master/examples)) or find them online. Currently, the STRIPS type is supported.
+
+Here is an [example](https://github.com/primaryobjects/strips/blob/master/examples/blocksworld2/problem.txt) that loads a domain and problem from the "Blocks World" domain. This problem involves stacking blocks A, B on one table to a stack AB on another table (where A is on top of B).
+
+### Example
+
+```javascript
+var strips = require('strips');
+
+// Load the domain and problem.
+strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/problem.txt', function(domain, problem) {
+    // Run the problem against the domain.
+    var solutions = strips.solve(domain, problem);
+
+    // Display each solution.
+    for (var i in solutions) {
+        var solution = solutions[i];
+
+        console.log('- Solution found in ' + solution.steps + ' steps!');
+        for (var i = 0; i < solution.path.length; i++) {
+            console.log((i + 1) + '. ' + solution.path[i]);
+        }        
+    }
+});
+```
+
+### Output
 
 ```
-*** Solution found in 3 steps!
-3. stack3 a b c x
-2. stack2 b c x
-1. unstack2 c a x
+- Solution found in 3 steps!
+1. move a x y
+2. move b x y
+3. stack a b y
+- Solution found in 3 steps!
+1. move b x y
+2. move a x y
+3. stack a b y
 ```
 
-## Starcraft!
+## Methods
 
-Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/grammar/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
+### load(domainPath, problemPath, callback)
 
-![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
-![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/supply-depot.jpg)
-![Collect Minerals 2](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/minerals.jpg)
-![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/barracks.jpg)
+Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
 
+### getChildStates(domain, state)
+
+Returns an array of all valid child states from a given parent state. Each child state is returned in the format { state: state, action: action }. State is the child state. Action is the applicable action and parameter values on the parent that produced the child state.
+
+### applicableActions(domain, state)
+
+Returns a list of applicable actions on the current state. This method uses all possible parameter values and runs each valid action that is defined in the domain against the current state. All actions that satisfy the preconditions are included in the resulting list.
+
+### applyAction(action, state)
+
+Applies the action on the state and returns the new (child) state. It is assumed that the action's precondition has already been tested.
+
+### isGoal(state, goalState)
+
+Returns true if the state contains the goal state conditions.
+
+### isEqual(action1, action2)
+
+Returns true if two actions are equal. Two actions are equal if they contain the same name and parameter values.
+
+### stateToString(state)
+
+Converts a JSON state object to a string. Since two states may have the same predicates in different orderings, this method sorts the predicates before returning the string object so they'll always look the same.
+
+### actionToString(action)
+
+Converts an action operation to a string. For example: move a b
+
+## Settings
+
+### strips.fast
+
+By default, strips uses baseN to calculate all possible parameter values for actions. Set this property to true to use permutationCombination instead. This is faster, but may not find all possible solutions.
+
+### strips.verbose
+
+Set to true to display status information on the console while searching for a solution.
+
+### strips.grammarDomainPath
+
+Allows changing the default path to the PEG.js domain grammar file. This file is used to enable parsing of the PDDL domain file.
+
+### strips.grammarProblemPath
+
+Allows changing the default path to the PEG.js problem grammar file. This file is used to enable parsing of the PDDL problem file.
+
+## Finding Solutions
+
+The default method, strips.solve(...), searches for all solutions using depth-first-search. You can use your own search method by calling the strips methods (listed above) to identify child states and actions yourself. In this way, you can implement A* search, breadth-first-search, or any other type of heuristic solution.
+
+For example, to find all applicable actions for the initial problem state:
+
+```javascript
+var strips = require('strips');
+var util = require('util');
+
+// Load the domain and problem.
+strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/problem.txt', function(domain, problem) {
+	// Get all applicable actions for the initial state.
+	var actions = strips.applicableActions(domain, problem.states[0]);
+	
+	// Display the JSON result.
+	console.log(util.inspect(actions, true, 100, true));
+});
 ```
-*** Solution found in 8 steps!
-8. build-barracks scv sector-a sector-b
-7. move scv mineral-field-a sector-a
-6. collect-minerals scv mineral-field-a
-5. move scv sector-b mineral-field-a
-4. build-supply-depot scv sector-b
-3. move scv mineral-field-b sector-b
-2. collect-minerals scv mineral-field-b
-1. move scv sector-a mineral-field-b
+
+Similarly, to see the result of applying the first applicable action against the initial state, you can do the following:
+
+```javascript
+// Get all applicable actions for the initial state.
+var actions = strips.applicableActions(domain, problem.states[0]);
+
+// Apply first action on the initial state.
+var childState = strips.applyAction(actions[0], problem.states[0]);
+
+// Display the JSON result.
+console.log(util.inspect(childState, true, 100, true));
 ```
+
+Of course, the real power is in designing your own search algorithm using the strips methods. See the [default](https://github.com/primaryobjects/strips/blob/master/strips/strips.js#L440) search routine for an idea of how to use the methods to search. Have fun!
 
 License
 ----
 
 MIT
 
-Author
-----
-Kory Becker
-http://www.primaryobjects.com/kory-becker
+Copyright (c) 2015 Kory Becker
+http://primaryobjects.com/kory-becker
