@@ -52,15 +52,15 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 
 ## Methods
 
-###### load(domainPath, problemPath, callback)
+##### load(domainPath, problemPath, callback)
 
 Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
 
-##### getChildStates(domain, state)
+###### getChildStates(domain, state)
 
 Returns an array of all valid child states from a given parent state. Each child state is returned in the format { state: state, action: action }. State is the child state. Action is the applicable action and parameter values on the parent that produced the child state.
 
-##### applicableActions(domain, state)
+#### applicableActions(domain, state)
 
 Returns a list of applicable actions on the current state. This method uses all possible parameter values and runs each valid action that is defined in the domain against the current state. All actions that satisfy the preconditions are included in the resulting list.
 
