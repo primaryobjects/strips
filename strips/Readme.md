@@ -52,7 +52,7 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 
 ## Methods
 
-##### load(domainPath, problemPath, callback)
+###### load(domainPath, problemPath, callback)
 
 Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
 
