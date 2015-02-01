@@ -52,53 +52,53 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 
 ## Methods
 
-### load(domainPath, problemPath, callback)
+##### load(domainPath, problemPath, callback)
 
 Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
 
-### getChildStates(domain, state)
+##### getChildStates(domain, state)
 
 Returns an array of all valid child states from a given parent state. Each child state is returned in the format { state: state, action: action }. State is the child state. Action is the applicable action and parameter values on the parent that produced the child state.
 
-### applicableActions(domain, state)
+##### applicableActions(domain, state)
 
 Returns a list of applicable actions on the current state. This method uses all possible parameter values and runs each valid action that is defined in the domain against the current state. All actions that satisfy the preconditions are included in the resulting list.
 
-### applyAction(action, state)
+##### applyAction(action, state)
 
 Applies the action on the state and returns the new (child) state. It is assumed that the action's precondition has already been tested.
 
-### isGoal(state, goalState)
+##### isGoal(state, goalState)
 
 Returns true if the state contains the goal state conditions.
 
-### isEqual(action1, action2)
+##### isEqual(action1, action2)
 
 Returns true if two actions are equal. Two actions are equal if they contain the same name and parameter values.
 
-### stateToString(state)
+##### stateToString(state)
 
 Converts a JSON state object to a string. Since two states may have the same predicates in different orderings, this method sorts the predicates before returning the string object so they'll always look the same.
 
-### actionToString(action)
+##### actionToString(action)
 
 Converts an action operation to a string. For example: move a b
 
 ## Settings
 
-### strips.fast
+##### strips.fast
 
 By default, strips uses baseN to calculate all possible parameter values for actions. Set this property to true to use permutationCombination instead. This is faster, but may not find all possible solutions.
 
-### strips.verbose
+##### strips.verbose
 
 Set to true to display status information on the console while searching for a solution.
 
-### strips.grammarDomainPath
+##### strips.grammarDomainPath
 
 Allows changing the default path to the PEG.js domain grammar file. This file is used to enable parsing of the PDDL domain file.
 
-### strips.grammarProblemPath
+##### strips.grammarProblemPath
 
 Allows changing the default path to the PEG.js problem grammar file. This file is used to enable parsing of the PDDL problem file.
 
@@ -133,6 +133,26 @@ var childState = strips.applyAction(actions[0], problem.states[0]);
 
 // Display the JSON result.
 console.log(util.inspect(childState, true, 100, true));
+```
+
+Here is a similar example that outputs the state and action to the console:
+
+```javascript
+// Get all applicable actions for the initial state.
+var actions = strips.applicableActions(domain, problem.states[0]);
+
+// Display the current state and action that we're going to apply.
+console.log('Current state');
+console.log(strips.stateToString(problem.states[0]));
+console.log('Applying action');
+console.log(strips.actionToString(actions[0]));
+
+// Apply first action on the initial state.
+var childState = strips.applyAction(actions[0], problem.states[0]);
+
+// Display the resulting modified state.
+console.log('New child state');
+console.log(strips.stateToString(childState));
 ```
 
 Of course, the real power is in designing your own search algorithm using the strips methods. See the [default](https://github.com/primaryobjects/strips/blob/master/strips/strips.js#L440) search routine for an idea of how to use the methods to search. Have fun!
