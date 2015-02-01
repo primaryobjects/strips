@@ -15,6 +15,8 @@ License MIT
 StripsManager = {
     // Set to true to use permutationCombination() instead of baseN() for parameter values. It will be faster, but might miss some solutions.
     fast: false,
+	// Set to true to display status information on the console while searching for a solution.
+	verbose: false,
     // PEG.js grammar for domain.
     grammarDomainPath: __dirname + '/grammar/grammar-domain.txt',
     // PEG.js grammer for problem.
@@ -464,6 +466,10 @@ StripsManager = {
             // Get child states by applying actions to current state.
             var fringe = StripsManager.getChildStates(domain, state.state);
 
+			if (StripsManager.verbose) {
+				console.log('Depth: ' + depth + ', ' + fringe.length + ' child states.');
+			}
+			
             // Run against each new child state.
             for (var i in fringe) {
                 var child = fringe[i];

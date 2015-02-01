@@ -1,7 +1,7 @@
 ﻿AI Planning with STRIPS
 --------
 
-Implementing a basic example of artificial intelligence planning using STRIPS and PDDL.
+An example of artificial intelligence planning using STRIPS and PDDL.
 
 This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI.
 
@@ -89,7 +89,7 @@ Here is the AI's [solution](https://github.com/primaryobjects/strips/blob/master
 
 ## Starcraft!
 
-Just because we can! Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
+Now, for some fun. Here is the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt). The task was to build a [barracks](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/barracks.txt). I originally wanted to build a Battlecruiser, but that was taking way too long (without a heuristic search!).
 
 ![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
 ![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/supply-depot.jpg)
