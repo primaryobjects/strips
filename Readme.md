@@ -3,7 +3,7 @@
 
 Implementing a basic example of artificial intelligence planning using STRIPS and PDDL.
 
-This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks in a certain way or Towers of Hanoi could both be encoded within the problem and domain to be solved by the AI.
+This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI.
 
 Several examples from the [Blocks World](http://en.wikipedia.org/wiki/Blocks_world) domain are included in this project, in which the AI is able to successfully plan the series of steps to move and stack blocks on a series of tables.
 
@@ -97,15 +97,14 @@ Just because we can! Here is the Starcraft [domain](https://github.com/primaryob
 ![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/barracks.jpg)
 
 ```
-*** Solution found in 8 steps!
-8. build-barracks scv sector-a mineral-field-a
-7. move scv mineral-field-b sector-a
-6. collect-minerals scv mineral-field-b
-5. move scv mineral-field-a mineral-field-b
-4. build-supply-depot scv mineral-field-a
-3. collect-minerals scv mineral-field-a
-2. move scv sector-b mineral-field-a
-1. move scv sector-a sector-b
+*** Solution found in 7 steps!
+7. build-barracks scv sector-a mineral-field-a
+6. move scv mineral-field-b sector-a
+5. collect-minerals scv mineral-field-b
+4. move scv mineral-field-a mineral-field-b
+3. build-supply-depot scv mineral-field-a
+2. collect-minerals scv mineral-field-a
+1. move scv sector-a mineral-field-a
 ```
 
 License
