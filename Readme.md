@@ -97,14 +97,15 @@ Just because we can! Here is the Starcraft [domain](https://github.com/primaryob
 ![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/grammar/starcraft/images/barracks.jpg)
 
 ```
-*** Solution found in 7 steps!
-7. build-barracks scv sector-a mineral-field-a
-6. move scv mineral-field-b sector-a
-5. collect-minerals scv mineral-field-b
-4. move scv mineral-field-a mineral-field-b
-3. build-supply-depot scv mineral-field-a
-2. collect-minerals scv mineral-field-a
-1. move scv sector-a mineral-field-a
+*** Solution found in 8 steps!
+8. build-barracks scv sector-a sector-b
+7. move scv mineral-field-a sector-a
+6. collect-minerals scv mineral-field-a
+5. move scv sector-b mineral-field-a
+4. build-supply-depot scv sector-b
+3. move scv mineral-field-b sector-b
+2. collect-minerals scv mineral-field-b
+1. move scv sector-a mineral-field-b
 ```
 
 License
