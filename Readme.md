@@ -1,9 +1,13 @@
 ﻿AI Planning with STRIPS
 --------
 
-An example of artificial intelligence planning using STRIPS and PDDL.
+This project is a demo of using the artificial intelligence planning library [strips](https://github.com/primaryobjects/strips/tree/master/strips), in node.js.
 
-This program runs a simple problem within a domain and identifies the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI.
+```
+npm install strips
+```
+
+The following examples show how to solve planning problems by identifying the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI (see below, it's pretty neat!).
 
 Several examples from the [Blocks World](http://en.wikipedia.org/wiki/Blocks_world) domain are included in this project, in which the AI is able to successfully plan the series of steps to move and stack blocks on a series of tables.
 
