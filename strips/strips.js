@@ -434,7 +434,10 @@ StripsManager = {
 
     solve: function(domain, problem, isDfs, maxSolutions) {
         // Find solution.
-        isDfs = isDfs == null ? true : false;
+        if (isDfs == null) {
+            isDfs = true;
+        }
+        
         maxSolutions = maxSolutions || 1;
 
         return isDfs ? StripsManager.solveDfs(domain, problem.states[0], problem.states[1], maxSolutions) :
@@ -511,6 +514,7 @@ StripsManager = {
         var fringe = [ { state: state, depth: 0 } ]; // Start with the initial state on the fringe.
         var visited = {};
         var depth = 0;
+        var solutions = [];
 
         while (fringe.length > 0) {
             // Investigate the next state with the lowest depth.
@@ -518,6 +522,9 @@ StripsManager = {
 
             // Remove this state from the fringe.
             fringe.shift();
+
+            // Mark this state as visited.
+            visited[StripsManager.stateToString(current.state)] = 1;
 
             // Check for goal.
             if (StripsManager.isGoal(current.state, goalState)) {
@@ -531,7 +538,11 @@ StripsManager = {
                     current = current.parent;
                 }
 
-                return [ { steps: steps, path: path } ];
+                solutions.push({ steps: steps, path: path });
+
+                if (solutions.length >= maxSolutions) {
+                    return solutions;
+                }
             }
             else {
                 // Get child states by applying actions to current state.
@@ -543,17 +554,18 @@ StripsManager = {
                     child.parent = current;
                     child.depth = current.depth + 1;
 
-                    fringe.push(child);
+                    if (!visited[StripsManager.stateToString(child.state)]) {
+                        fringe.push(child);
+                    }
                 }
             }
 
             if (StripsManager.verbose) {
                 console.log('Depth: ' + current.depth + ', ' + fringe.length + ' child states.');
             }
-
-            // Mark this state as visited.
-            visited[StripsManager.stateToString(current.state)] = 1;
         }
+
+        return solutions;
     }
 };
 
