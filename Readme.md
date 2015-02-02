@@ -1,7 +1,7 @@
 ﻿AI Planning with STRIPS
 --------
 
-This project is a demo of using the artificial intelligence planning library [strips](https://github.com/primaryobjects/strips/tree/master/strips), in node.js.
+This project is a demo of using the artificial intelligence planning library [strips](https://www.npmjs.com/package/strips), in node.js.
 
 ```
 npm install strips
