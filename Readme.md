@@ -112,6 +112,30 @@ Now, for some fun. Here is the Starcraft [domain](https://github.com/primaryobje
 8. build-barracks scv sector-a sector-b
 ```
 
+One step further, here is the AI's solution for traning a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt).
+
+![Collect Minerals 1](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
+![Supply Depot](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/supply-depot.jpg)
+![Collect Minerals 2](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
+![Barracks](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/barracks.jpg)
+![Collect Minerals 3](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/minerals.jpg)
+![Train Marine](https://raw.githubusercontent.com/primaryobjects/strips/master/examples/starcraft/images/marine.jpg)
+
+```
+- Solution found in 11 steps!
+1. move scv sector-a mineral-field-a
+2. collect-minerals scv mineral-field-a
+3. move scv mineral-field-a sector-b
+4. build-supply-depot scv sector-b
+5. move scv sector-b mineral-field-b
+6. collect-minerals scv mineral-field-b
+7. move scv mineral-field-b sector-a
+8. build-barracks scv sector-a sector-b
+9. move scv sector-a mineral-field-c
+10. collect-minerals scv mineral-field-c
+11. train-marine scv sector-a
+```
+
 License
 ----
 

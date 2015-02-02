@@ -7,33 +7,33 @@
   (:action collect-minerals
      :parameters (?b ?t1)
      :precondition (and (scv ?b) (location ?t1) (minerals ?t1) (not (empty ?t1)) (at ?b ?t1))
-     :effect (and (empty ?t1) (minerals ?b)))
+     :effect (and (empty ?t1) (holding-minerals ?b)))
   (:action build-supply-depot
      :parameters (?b ?t1)
-     :precondition (and (scv ?b) (location ?t1) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
-     :effect (and (building ?t1) (depot ?t1) not (minerals ?b)))
+     :precondition (and (scv ?b) (location ?t1) (holding-minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
+     :effect (and (building ?t1) (depot ?t1) not (holding-minerals ?b)))
   (:action build-barracks
      :parameters (?b ?t1 ?t2)
-     :precondition (and (scv ?b) (location ?t1) (location ?t2) (depot ?t2) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
-     :effect (and (building ?t1) (barracks ?t1) not (minerals ?b)))
+     :precondition (and (scv ?b) (location ?t1) (location ?t2) (depot ?t2) (holding-minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
+     :effect (and (building ?t1) (barracks ?t1) not (holding-minerals ?b)))
   (:action build-factory
      :parameters (?b ?t1 ?t2)
-     :precondition (and (scv ?b) (location ?t1) (location ?t2) (barracks ?t2) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
-     :effect (and (building ?t1) (factory ?t1) not (minerals ?b)))
+     :precondition (and (scv ?b) (location ?t1) (location ?t2) (barracks ?t2) (holding-minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
+     :effect (and (building ?t1) (factory ?t1) not (holding-minerals ?b)))
   (:action build-starport
      :parameters (?b ?t1 ?t2)
-     :precondition (and (scv ?b) (location ?t1) (location ?t2) (factory ?t2) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
-     :effect (and (building ?t1) (starport ?t1) not (minerals ?b)))
+     :precondition (and (scv ?b) (location ?t1) (location ?t2) (factory ?t2) (holding-minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
+     :effect (and (building ?t1) (starport ?t1) not (holding-minerals ?b)))
   (:action build-fusion-core
      :parameters (?b ?t1 ?t2)
-     :precondition (and (scv ?b) (location ?t1) (location ?t2) (starport ?t2) (minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
-     :effect (and (building ?t1) (fusion-core ?t1) not (minerals ?b)))
+     :precondition (and (scv ?b) (location ?t1) (location ?t2) (starport ?t2) (holding-minerals ?b) (at ?b ?t1) not (building ?t1) not (minerals ?t1))
+     :effect (and (building ?t1) (fusion-core ?t1) not (holding-minerals ?b)))
   (:action train-marine
      :parameters (?b ?t1)
-     :precondition (and (minerals ?b) (barracks ?t1))
-     :effect (and (marine ?t1) not (minerals ?b)))
+     :precondition (and (holding-minerals ?b) (barracks ?t1))
+     :effect (and (marine ?t1) not (holding-minerals ?b)))
   (:action train-battlecruiser
      :parameters (?b ?t1 ?t2)
-     :precondition (and (minerals ?b) (starport ?t1) (fusion-core ?t2))
-     :effect (and (battlecruiser ?t1) not (minerals ?b)))
+     :precondition (and (holding-minerals ?b) (starport ?t1) (fusion-core ?t2))
+     :effect (and (battlecruiser ?t1) not (holding-minerals ?b)))
 )
