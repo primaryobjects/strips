@@ -432,16 +432,22 @@ StripsManager = {
         return result;
     },
 
-    solve: function(domain, problem) {
+    solve: function(domain, problem, isDfs, maxSolutions) {
         // Find solution.
-        return StripsManager.run(domain, { state: problem.states[0] }, problem.states[1]);
+        isDfs = isDfs == null ? true : false;
+        maxSolutions = maxSolutions || 1;
+
+        return isDfs ? StripsManager.solveDfs(domain, problem.states[0], problem.states[1], maxSolutions) :
+                       StripsManager.solveBfs(domain, problem.states[0], problem.states[1], maxSolutions);
     },
 
-    run: function(domain, state, goalState, visited, depth) {
+    solveDfs: function(domain, state, goalState, maxSolutions, visited, depth) {
+        // Find all solutions using depth-first-search.
         var solutions = [];
 
         visited = visited ? JSON.parse(JSON.stringify(visited)) : {};
         depth = depth || 0;
+        state = state.state ? state : { state: state }; // format state to mirror child, which includes parent and action in recursion.
 
         // If this is the initial state, add it to the visited list.
         if (Object.keys(visited).length == 0) {
@@ -478,11 +484,19 @@ StripsManager = {
 
                 if (!visited[key]) {
                     visited[key] = 1;
-                    var subSolutions = StripsManager.run(domain, child, goalState, visited, depth + 1);
+                    var subSolutions = StripsManager.solveDfs(domain, child, goalState, maxSolutions, visited, depth + 1);
                     if (subSolutions.length > 0) {
                         // This branch has a solution(s).
                         for (var j in subSolutions) {
                             solutions.push(subSolutions[j]);
+
+                            if (solutions.length >= maxSolutions) {
+                                break;
+                            }
+                        }
+
+                        if (solutions.length >= maxSolutions) {
+                            break;
                         }
                     }
                 }
@@ -490,6 +504,56 @@ StripsManager = {
         }
 
         return solutions;
+    },
+
+    solveBfs: function(domain, state, goalState, maxSolutions) {
+        // Find first solution using breadth-first-search.
+        var fringe = [ { state: state, depth: 0 } ]; // Start with the initial state on the fringe.
+        var visited = {};
+        var depth = 0;
+
+        while (fringe.length > 0) {
+            // Investigate the next state with the lowest depth.
+            var current = fringe[0];
+
+            // Remove this state from the fringe.
+            fringe.shift();
+
+            // Check for goal.
+            if (StripsManager.isGoal(current.state, goalState)) {
+                // Compile solution path.
+                var path = [];
+                var steps = current.depth;
+
+                while (current != null && current.parent != null) {
+                    // Since we move from goal backwards, add this step to the front of the array (rather than the end, otherwise it would be in reverse order).
+                    path.unshift(StripsManager.actionToString(current.action));
+                    current = current.parent;
+                }
+
+                return [ { steps: steps, path: path } ];
+            }
+            else {
+                // Get child states by applying actions to current state.
+                var children = StripsManager.getChildStates(domain, current.state);
+
+                // Add the children to the fringe.
+                for (var i in children) {
+                    var child = children[i];
+                    child.parent = current;
+                    child.depth = current.depth + 1;
+
+                    fringe.push(child);
+                }
+            }
+
+            if (StripsManager.verbose) {
+                console.log('Depth: ' + current.depth + ', ' + fringe.length + ' child states.');
+            }
+
+            // Mark this state as visited.
+            visited[StripsManager.stateToString(current.state)] = 1;
+        }
     }
 };
 

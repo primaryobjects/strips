@@ -44,10 +44,6 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 1. move a x y
 2. move b x y
 3. stack a b y
-- Solution found in 3 steps!
-1. move b x y
-2. move a x y
-3. stack a b y
 ```
 
 ## Methods
@@ -55,6 +51,10 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 ###### load(domainPath, problemPath, callback)
 
 Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
+
+###### solve(domain, problem, isDepthFirstSearch = true, maxSolutions = 1)
+
+Searches for a solution to the given problem by using depth-first-search or breadth-first-search. The default setting uses depth-first-search and returns the first solution found. To return more solutions, set maxSolutions to a higher value. Note, you can write your own solution algorithm by using the methods below.
 
 ###### getChildStates(domain, state)
 
