@@ -7,5 +7,5 @@
          (location mineralFieldA) (location mineralFieldB) (location mineralFieldC) (location mineralFieldD) (location mineralFieldE) (location mineralFieldF)
          (minerals mineralFieldA) (minerals mineralFieldB) (minerals mineralFieldC) (minerals mineralFieldD) (minerals mineralFieldE) (minerals mineralFieldF)
          (at scv sectorA)))
-  (:goal (and (battlecruiser sectorA)))
+  (:goal (and (battlecruiser sectorC)))
 )
