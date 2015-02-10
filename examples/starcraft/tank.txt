@@ -1,3 +1,4 @@
+; You'll want to use A* to search for a solution. Otherwise, it may take a long time.
 (define (problem traintank)
   (:domain starcraft)
   (:objects
