@@ -1,20 +1,11 @@
 program   = result:problem { return result; }
  
-problem = space* delimiter* "define" space* delimiter* "problem" space* name:word delimiter* space* domain:domain delimiter* objects:objects? delimiter* states:state*
-{ return { name: name.join('').replace(/[,:? ]/g, ''), domain: domain, objects: objects, states: states }; }
+problem = space* delimiter* "define" space* delimiter* "problem" space* name:word delimiter* space* domain:domain space* states:state*
+{ return { name: name.join('').replace(/[,:? ]/g, ''), domain: domain, states: states }; }
  
 domain = ":domain" space* name:word delimiter*
 { return name.join('').replace(/[,:? ]/g, ''); }
-
-objects = ":objects" space* objects:object*
-{ return objects; }
-
-object = parameters:objectName+ "-" space* type:alphanum space*
-{ return { parameters: parameters, type: type }; }
-
-objectName = name:alphanum space*
-{ return name; }
-
+ 
 state = space* delimiter* ":" name:word space* delimiter* actions:logic*
 { return { name: name.join('').replace(/[,:? ]/g, ''), actions: actions }; }
  
@@ -25,13 +16,11 @@ boolean   = "#t" / "#f"
 integer   = [1-9] [0-9]*
 string    = "\"" ("\\" . / [^"])* "\""
 word      = word:([a-zA-Z0-9\-]+) { return word; }
-alphanum  = word:([a-zA-Z0-9]+) { return word.join('').replace(/[,:? ]/g, ''); }
 symbol    = (!delimiter .)+
-space     = [\n\r\t ] / comment
+space     = [\n\r\t ]
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
  
 parameter = param:word space*
 { return param.join('').replace(/[,:? ]/g, ''); }

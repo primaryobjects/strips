@@ -1,13 +1,13 @@
 program   = result:domain { return result; }
  
-domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req types:types* actions:action*
+domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req actions:action*
 {
   var reqs = '';
   for (var i in req) {
      reqs += req[i] + ', ';
   }
  
-  return { domain: domainName.join('').replace(/[,:?]/g, ''), requirements: req, types: types ? types[0] : null, actions: actions };
+  return { domain: domainName.join('').replace(/[,:?]/g, ''), requirements: req, actions: actions };
 }
  
 req = ":requirements" req:reqType* delimiter*
@@ -22,21 +22,8 @@ req = ":requirements" req:reqType* delimiter*
  
 reqType = space* ":" req:word
 { return req.join('').replace(/[,:?]/g, ''); }
-
-types = ":types" names:typeName* delimiter*
-{
-  var result = [];
-  for (var i in names) {
-     result.push(names[i]);
-  }
  
-  return result;
-}
-
-typeName = space* name:word
-{ return name.join('').replace(/[,:?]/g, ''); }
-
-action = ":action" space* operationName:word parameters:parametersTyped precondition:precondition effect:effect
+action = ":action" space* operationName:word parameters:parameters precondition:precondition effect:effect
 { return { action: operationName.join('').replace(/[,:?]/g, ''), parameters: parameters, precondition: precondition, effect: effect }; }
  
 logic = operation:logicOp* delimiter* action:word space* params:parameter* delimiter*
@@ -47,27 +34,17 @@ integer   = [1-9] [0-9]*
 string    = "\"" ("\\" . / [^"])* "\""
 word      = word:([a-zA-Z0-9\-]+) { return word; }
 symbol    = (!delimiter .)+
-space     = [\n\r\t ] / comment
+space     = [\n\r\t ]
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
-
+ 
 parameters = space* ":parameters" delimiter+ params:parameter+ delimiter space*
 { return params; }
  
 parameter = "?" param:word space*
 { return param.join('').replace(/[,:? ]/g, ''); }
-
-parametersTyped = space* ":parameters" delimiter+ params:parameterTyped+ delimiter space*
-{ return params; }
  
-parameterTyped = "?" param:word space* type:type?
-{ return { parameter: param.join('').replace(/[,:? ]/g, ''), type: type }; }
-
-type = "-" space* name:word space*
-{ return name.join('').replace(/[,:? ]/g, ''); }
-
 precondition = space* ":precondition" delimiter+ logic:logic+
 { return logic; }
  
