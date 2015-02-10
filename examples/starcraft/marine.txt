@@ -2,10 +2,10 @@
   (:domain starcraft)
   (:objects
     scv - builder
-    sectora sectorb mineralfielda mineralfieldb mineralfieldc - area)
-  (:init (and (scv scv) (location sectora) (location sectorb)
-         (location mineralfielda) (location mineralfieldb) (location mineralfieldc) 
-         (minerals mineralfielda) (minerals mineralfieldb) (minerals mineralfieldc)
-         (at scv sectora)))
-  (:goal (and (marine sectora)))
+    sectorA sectorB mineralFieldA mineralFieldB mineralFieldC - area)
+  (:init (and (scv scv) (location sectorA) (location sectorB)
+         (location mineralFieldA) (location mineralFieldB) (location mineralFieldC) 
+         (minerals mineralFieldA) (minerals mineralFieldB) (minerals mineralFieldC)
+         (at scv sectorA)))
+  (:goal (and (marine sectorA)))
 )
