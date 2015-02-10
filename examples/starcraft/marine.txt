@@ -1,8 +1,11 @@
 (define (problem train-marine)
   (:domain starcraft)
-  (:init (and (scv scv) (location sector-a) (location sector-b)
-         (location mineral-field-a) (location mineral-field-b) (location mineral-field-c) 
-         (minerals mineral-field-a) (minerals mineral-field-b) (minerals mineral-field-c)
-         (at scv sector-a)))
-  (:goal (and (marine sector-a)))
+  (:objects
+    scv - builder
+    sectora sectorb mineralfielda mineralfieldb mineralfieldc - area)
+  (:init (and (scv scv) (location sectora) (location sectorb)
+         (location mineralfielda) (location mineralfieldb) (location mineralfieldc) 
+         (minerals mineralfielda) (minerals mineralfieldb) (minerals mineralfieldc)
+         (at scv sectora)))
+  (:goal (and (marine sectora)))
 )

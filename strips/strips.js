@@ -66,9 +66,26 @@ StripsManager = {
             }
 
             // Set parameter values list on result.
-            result.objects = [];
+            result.values = {};
             for (var key in values) {
-                result.objects.push(key);
+                // Look-up type for this value in the objects declaration.
+                var type = null;
+
+                for (var i in result.objects) {
+                    for (var j in result.objects[i].parameters) {
+                        var parameter = result.objects[i].parameters[j];
+                        if (parameter == key) {
+                            type = result.objects[i].type;
+                            break;
+                        }
+                    }
+
+                    if (type)
+                        break;
+                }
+
+                result.values[type] = result.values[type] || [];
+                result.values[type].push(key);
             }
 
             if (callback) {
@@ -83,7 +100,11 @@ StripsManager = {
             // Load the problem.
             StripsManager.loadProblem(problemPath, function(problem) {
                 // Give a copy of the possible parameter values to the domain.
-                domain.objects = problem.objects;
+                domain.values = problem.values;
+
+                if (domain.requirements.indexOf('typing') != -1 && domain.values.null) {
+                    console.log('ERROR: :typing is specified in domain, but not all parameters declare a type. Verify problem file contains an :objects section.');
+                }
 
                 if (callback) {
                     callback(domain, problem);
@@ -94,7 +115,15 @@ StripsManager = {
 
     predicateCombinations: function(state) {
         // For "Blocks World" problems, combinatorics.permutationCombination(state) is sufficient and faster, but otherwise, baseN(state) gives the full range of possible parameter values.
-        var cmb = StripsManager.fast ? combinatorics.permutationCombination(state) : combinatorics.baseN(state);
+        // First, convert the values object { block: [ 'a', 'b'], table: ['x', 'y'] } into a flat array [ 'a', 'b', 'x', 'y' ].
+        var values = [];
+        for (var key in state) {
+            for (var i in state[key]) {
+                values.push(state[key][i]);
+            }
+        }
+
+        var cmb = StripsManager.fast ? combinatorics.permutationCombination(values) : combinatorics.baseN(values);
 
         return cmb.toArray();
     },
@@ -126,8 +155,11 @@ StripsManager = {
             // Find matching parameters.
             for (var k in action1.parameters) {
                 // Use the map, if available (in the case of a non-concrete action). Otherwise, use the concrete parameter values.
-                var parameter1 = action1.map ? action1.map[action1.parameters[k]] : action1.parameters[k];
-                var parameter2 = action2.map ? action2.map[action2.parameters[k]] : action2.parameters[k];
+                var value1 = action1.parameters[k].parameter ? action1.parameters[k].parameter : action1.parameters[k];
+                var value2 = action2.parameters[k].parameter ? action2.parameters[k].parameter : action2.parameters[k];
+
+                var parameter1 = action1.map ? action1.map[value1] : value1;
+                var parameter2 = action2.map ? action2.map[value2] : value2;
 
                 if (parameter1 != parameter2) {
                     result = false;
@@ -150,7 +182,7 @@ StripsManager = {
             for (var l in state.actions) {
                 var match = true;
                 operation = precondition[i].operation || 'and'; // If no operation is specified, default to 'and'. Must explicitly provide 'not' where required.
-                
+
                 // Check if the name and number of parameters match for the current action and precondition.
                 if (state.actions[l].action == precondition[i].action && state.actions[l].parameters.length == precondition[i].parameters.length) {
                     // Check if the parameter values match.
@@ -219,23 +251,98 @@ StripsManager = {
     },
     
     applicableActions: function(domain, state) {
-        // Returns an array of applicable concrete actions for the current state, using the possible parameter values in domain.objects array (Example: objects = ['a', 'b', 't1', 't2', 't3']).
+        // Returns an array of applicable concrete actions for the current state, using the possible parameter values in domain.values array (Example: values = ['a', 'b', 't1', 't2', 't3']).
         // Test each domain action precondition against the cases. If one holds valid, then that action is applicable in the current state.
         var result = [];
 
-        if (!domain.objects || domain.objects.length == 0) {
-            console.log('ERROR: No parameter values found in domain.objects.');
+        if (!domain.values || domain.values.length == 0) {
+            console.log('ERROR: No parameter values found in domain.values.');
             return;
         }
-
-        // Get all action combinations for the current state.
-        var cases = StripsManager.predicateCombinations(domain.objects);
 
         for (var i in domain.actions) {
             var action = domain.actions[i]; // op1
             var parameters = action.parameters; // x1, x2, x3
             var populatedAction = JSON.parse(JSON.stringify(action)); // copy for replacing parameters with actual values.
             var parameterMapHash = {};
+
+            // Get all action combinations for the current action.
+            // Go through each required parameter, look at the type (if using :typing), and use all combinations of values belonging to that type.
+            var cases = [];
+            if (domain.requirements.indexOf('typing') > -1) {
+                // First, get a count of how many parameters we need of each type.
+                var error = false;
+                var typeCounts = {};
+                for (var j in parameters) {
+                    if (!parameters[j].type) {
+                        console.log('ERROR: :typing is specified, but no type found in action "' + action.action + '" for parameter "' + parameters[j].parameter + '"');
+                        error = true;
+                        break;
+                    }
+
+                    typeCounts[parameters[j].type] = (typeCounts[parameters[j].type] + 1) || 1;
+                }
+
+                if (!error) {
+                    // Next, get the combination values.
+                    for (var key in typeCounts) {
+                        // Get all combination values for this parameter type.
+                        var values = domain.values[key];
+                        var cmb = combinatorics.baseN(values, typeCounts[key]);
+
+                        cmb.forEach(function(combo) {
+                            cases.push(combo);
+                        });
+                    }
+                }
+
+                var cmb = combinatorics.combination(cases, parameters.length);
+
+                // Filter the combinations to valid parameter types and unique combos.
+                var uniqueCombos = {};
+                cases = cmb.filter(function (combo) {
+                    // Does this combo have valid values for the type? Make sure each value to be set for a parameter index exists in the list of types under the domain.
+                    var key = '';
+
+                    for (var ci in combo) {
+                        var value = combo[ci][0];
+                        var type = parameters[ci].type;
+                        key += value;
+
+                        // Check if this value exists in the list for this type.
+                        if (domain.values[type].indexOf(value) == -1) {
+                            // The value is not part of this type, that means this combo is invalid.
+                            return false;
+                        }
+                    }
+
+                    if (uniqueCombos[key]) {
+                        // Duplicate combo. Since we only take the first value in any lists as 1 value per parameter, we can end up with duplicates.
+                        return false;
+                    }
+
+                    uniqueCombos[key] = 1;
+
+                    return true;
+                });
+
+                var cases2 = [];
+
+                for (var j in cases) {
+                    var subCase = [];
+                    for (var k in cases[j]) {
+                        subCase.push(cases[j][k][0]);
+                    }
+
+                    cases2.push(subCase);
+                }
+
+                cases = cases2;
+            }
+            else {
+                // Typing not being used, just get all action combinations for the current state.
+                cases = StripsManager.predicateCombinations(domain.values);
+            }
 
             // Assign values to the parameters for each test case.
             for (var j in cases) {
@@ -245,7 +352,7 @@ StripsManager = {
                 var parameterMap = []; // map of parameter values to be populated
                 // Initialize default parameter values for this action. We'll set concrete values next.
                 for (var j in parameters) {
-                    parameterMap[parameters[j]] = testCase[nindex++];
+                    parameterMap[parameters[j].parameter] = testCase[nindex++];
                 }
 
                 // Get the action's precondition parameters.
