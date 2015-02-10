@@ -37,8 +37,12 @@
      :parameters (?b - builder ?t1 - area)
      :precondition (and (collected-minerals ?b) (factory ?t1))
      :effect (and (tank ?t1) not (collected-minerals ?b)))
+  (:action train-wraith
+     :parameters (?b - builder ?t1 - area)
+     :precondition (and (collected-minerals ?b) (starport ?t1))
+     :effect (and (wraith ?t1) not (collected-minerals ?b)))
   (:action train-battlecruiser
-     :parameters (?b - builder ?t1 - area ?t2 - area)
-     :precondition (and (collected-minerals ?b) (starport ?t1) (fusion-core ?t2))
+     :parameters (?b - builder ?t1 - area)
+     :precondition (and (collected-minerals ?b) (fusion-core ?t1))
      :effect (and (battlecruiser ?t1) not (collected-minerals ?b)))
 )

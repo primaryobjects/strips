@@ -288,7 +288,7 @@ StripsManager = {
                     for (var key in typeCounts) {
                         // Get all combination values for this parameter type.
                         var values = domain.values[key];
-                        var cmb = combinatorics.baseN(values, typeCounts[key]);
+                        var cmb = combinatorics.baseN(values, 1);//typeCounts[key]);
 
                         cmb.forEach(function(combo) {
                             cases.push(combo);
@@ -296,7 +296,7 @@ StripsManager = {
                     }
                 }
 
-                var cmb = combinatorics.combination(cases, parameters.length);
+                var cmb = combinatorics.permutation(cases, parameters.length);
 
                 // Filter the combinations to valid parameter types and unique combos.
                 var uniqueCombos = {};
