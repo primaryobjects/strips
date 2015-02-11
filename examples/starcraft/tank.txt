@@ -1,0 +1,12 @@
+; You'll want to use A* to search for a solution. Otherwise, it may take a long time.
+(define (problem train-tank)
+  (:domain starcraft)
+  (:objects
+    scv - builder
+    sectorA sectorB sectorC mineralFieldA mineralFieldB mineralFieldC mineralFieldD - area)  
+  (:init (and (scv scv) (location sectorA) (location sectorB) (location sectorC)
+         (location mineralFieldA) (location mineralFieldB) (location mineralFieldC) (location mineralFieldD) 
+         (minerals mineralFieldA) (minerals mineralFieldB) (minerals mineralFieldC) (minerals mineralFieldD)
+         (at scv sectorA)))
+  (:goal (and (tank sectorA)))
+)

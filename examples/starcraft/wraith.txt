@@ -1,0 +1,11 @@
+(define (problem train-wraith)
+  (:domain starcraft)
+  (:objects
+    scv - builder
+    sectorA sectorB sectorC sectorD mineralFieldA mineralFieldB mineralFieldC mineralFieldD mineralFieldE - area)  
+  (:init (and (scv scv) (location sectorA) (location sectorB) (location sectorC) (location sectorD)
+         (location mineralFieldA) (location mineralFieldB) (location mineralFieldC) (location mineralFieldD) (location mineralFieldE)
+         (minerals mineralFieldA) (minerals mineralFieldB) (minerals mineralFieldC) (minerals mineralFieldD) (minerals mineralFieldE)
+         (at scv sectorA)))
+  (:goal (and (wraith sectorA)))
+)

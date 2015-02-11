@@ -125,7 +125,7 @@
         return ripple | ones;
     };
     var combination = function(ary, nelem, fun) {
-        if (ary.length > 32) throw new RangeError;
+        //if (ary.length > 32) throw new RangeError;
         if (!nelem) nelem = ary.length;
         if (nelem < 1) throw new RangeError;
         if (nelem > ary.length) throw new RangeError;
