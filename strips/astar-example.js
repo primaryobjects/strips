@@ -3,7 +3,7 @@ strips.verbose = true;
 
 // Load the domain and problem.
 strips.load('../examples/starcraft/domain.txt', '../examples/starcraft/marine.txt', function(domain, problem) {
-    // Run the problem against the domain.
+    // Use A* search to run the problem against the domain.
     var solutions = solveA(domain, problem);
 
     // Display solution.
@@ -15,6 +15,7 @@ strips.load('../examples/starcraft/domain.txt', '../examples/starcraft/marine.tx
 });
 
 function costMarine(state) {
+    // This is our A* heuristic method.
     // Calculates the A* cost of a state. For Starcraft, the heuristic will be how many required buildings have been built. Subtract 1 from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
     var cost = 10;
 
