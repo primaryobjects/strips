@@ -166,9 +166,9 @@ Of course, the real power is in designing your own search algorithm using the st
 
 You can implement your own A* search to find a solution. A* works by using a heuristic to guide it down the path of possible moves in the domain. In this manner, it is much faster than simple breadth-first or depth-first search. It will also find an optimal solution that contains the least number of steps.
 
-Since the strips library exposes its internal methods, you can implement your own search algorithm. Here is [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) of an A* search method for the [starcraft](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) domain, to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt).
+Since the strips library exposes its internal methods, you can implement your own search algorithm. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) of an A* search method for the [starcraft](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) domain, to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt).
 
-The core idea to a custom search method is to use the strips methods isGoal() and getChildStates() to iterate through all states and actions. Once you have a list of child states, apply your heuristic to calculate a cost for each state. Then sort the states by cost so that A* can choose the next cheapest state to move to. You can see the details in the [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js).
+The core idea to a custom search method is to use the strips methods isGoal() and getChildStates() to iterate through all states and actions. Once you have a list of child states, apply your heuristic to calculate a cost for each state. Then sort the states by cost so that A* can choose the next cheapest state to move to. You can see the details in the example.
 
 Have fun!
 
