@@ -106,6 +106,12 @@ StripsManager = {
                     console.log('ERROR: :typing is specified in domain, but not all parameters declare a type. Verify problem file contains an :objects section.');
                 }
 
+                // Load list of applicable combinations of parameter values for each action.
+                for (var i in domain.actions) {
+                    // Get all applicable parameter combinations for the current action.
+                    domain.actions[i].parameterCombinations = StripsManager.parameterCombinations(domain, domain.actions[i]);
+                }
+
                 if (callback) {
                     callback(domain, problem);
                 }
@@ -128,6 +134,90 @@ StripsManager = {
         return cmb.toArray();
     },
     
+    parameterCombinations: function(domain, action) {
+        // Go through each required parameter, look at the type (if using :typing), and use all combinations of values belonging to that type.
+        var cases = [];
+        var parameters = action.parameters;
+
+        // Is :typing enabled on the domain?
+        if (domain.requirements.indexOf('typing') > -1) {
+            // First, get a count of how many parameters we need of each type.
+            var error = false;
+            var typeCounts = {};
+            for (var j in parameters) {
+                if (!parameters[j].type) {
+                    console.log('ERROR: :typing is specified, but no type found in action "' + action.action + '" for parameter "' + parameters[j].parameter + '"');
+                    error = true;
+                    break;
+                }
+
+                typeCounts[parameters[j].type] = (typeCounts[parameters[j].type] + 1) || 1;
+            }
+
+            if (!error) {
+                // Next, get the combination values.
+                for (var key in typeCounts) {
+                    // Get all combination values for this parameter type.
+                    var values = domain.values[key];
+                    var cmb = combinatorics.baseN(values, 1);
+
+                    cmb.forEach(function(combo) {
+                        cases.push(combo);
+                    });
+                }
+            }
+
+            // Get a combination of all possibilities of the discovered parameters.
+            var cmb = combinatorics.permutation(cases, parameters.length);
+
+            // Filter the combinations to valid parameter types and unique combos.
+            var uniqueCombos = {};
+            cases = cmb.filter(function (combo) {
+                // Does this combo have valid values for the type? Make sure each value to be set for a parameter index exists in the list of types under the domain.
+                var key = '';
+
+                for (var ci in combo) {
+                    var value = combo[ci][0];
+                    var type = parameters[ci].type;
+                    key += value;
+
+                    // Check if this value exists in the list for this type.
+                    if (domain.values[type].indexOf(value) == -1) {
+                        // The value is not part of this type, that means this combo is invalid.
+                        return false;
+                    }
+                }
+
+                if (uniqueCombos[key]) {
+                    // Duplicate combo. Since we only take the first value in any lists as 1 value per parameter, we can end up with duplicates.
+                    return false;
+                }
+
+                uniqueCombos[key] = 1;
+
+                return true;
+            });
+
+            var cases2 = [];
+            for (var j in cases) {
+                var subCase = [];
+                for (var k in cases[j]) {
+                    subCase.push(cases[j][k][0]);
+                }
+
+                cases2.push(subCase);
+            }
+
+            cases = cases2;
+        }
+        else {
+            // Typing not being used, just get all action combinations for the current state.
+            cases = StripsManager.predicateCombinations(domain.values);
+        }
+
+        return cases;
+    },
+
     andCount: function(precondition) {
         // Returns the count for the number of 'and' matches in a precondition.
         var count = 0;
@@ -215,7 +305,7 @@ StripsManager = {
         
         return (matchCount == andCount);
     },
-    
+
     getApplicableActionInState: function(state, action) {
         // This function returns an applicable concrete action for the given state, or null if the precondition is not satisfied.
         var resolvedAction = null;
@@ -266,87 +356,9 @@ StripsManager = {
             var populatedAction = JSON.parse(JSON.stringify(action)); // copy for replacing parameters with actual values.
             var parameterMapHash = {};
 
-            // Get all action combinations for the current action.
-            // Go through each required parameter, look at the type (if using :typing), and use all combinations of values belonging to that type.
-            var cases = [];
-            if (domain.requirements.indexOf('typing') > -1) {
-                // First, get a count of how many parameters we need of each type.
-                var error = false;
-                var typeCounts = {};
-                for (var j in parameters) {
-                    if (!parameters[j].type) {
-                        console.log('ERROR: :typing is specified, but no type found in action "' + action.action + '" for parameter "' + parameters[j].parameter + '"');
-                        error = true;
-                        break;
-                    }
-
-                    typeCounts[parameters[j].type] = (typeCounts[parameters[j].type] + 1) || 1;
-                }
-
-                if (!error) {
-                    // Next, get the combination values.
-                    for (var key in typeCounts) {
-                        // Get all combination values for this parameter type.
-                        var values = domain.values[key];
-                        var cmb = combinatorics.baseN(values, 1);//typeCounts[key]);
-
-                        cmb.forEach(function(combo) {
-                            cases.push(combo);
-                        });
-                    }
-                }
-
-                var cmb = combinatorics.permutation(cases, parameters.length);
-
-                // Filter the combinations to valid parameter types and unique combos.
-                var uniqueCombos = {};
-                cases = cmb.filter(function (combo) {
-                    // Does this combo have valid values for the type? Make sure each value to be set for a parameter index exists in the list of types under the domain.
-                    var key = '';
-
-                    for (var ci in combo) {
-                        var value = combo[ci][0];
-                        var type = parameters[ci].type;
-                        key += value;
-
-                        // Check if this value exists in the list for this type.
-                        if (domain.values[type].indexOf(value) == -1) {
-                            // The value is not part of this type, that means this combo is invalid.
-                            return false;
-                        }
-                    }
-
-                    if (uniqueCombos[key]) {
-                        // Duplicate combo. Since we only take the first value in any lists as 1 value per parameter, we can end up with duplicates.
-                        return false;
-                    }
-
-                    uniqueCombos[key] = 1;
-
-                    return true;
-                });
-
-                var cases2 = [];
-
-                for (var j in cases) {
-                    var subCase = [];
-                    for (var k in cases[j]) {
-                        subCase.push(cases[j][k][0]);
-                    }
-
-                    cases2.push(subCase);
-                }
-
-                cases = cases2;
-            }
-            else {
-                // Typing not being used, just get all action combinations for the current state.
-                cases = StripsManager.predicateCombinations(domain.values);
-            }
-
             // Assign values to the parameters for each test case.
-            for (var j in cases) {
-                var testCase = cases[j];
+            for (var j in action.parameterCombinations) {
+                var testCase = action.parameterCombinations[j];
                 var nindex = 0;
                 
                 var parameterMap = []; // map of parameter values to be populated
