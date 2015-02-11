@@ -16,7 +16,7 @@ strips.load('./examples/starcraft/domain.txt', './examples/starcraft/marine.txt'
 
 function costMarine(state) {
     // This is our A* heuristic method to calculate the cost of a state.
-	// For Starcraft, the heuristic will be how many required buildings have been built. Subtract x from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
+    // For Starcraft, the heuristic will be how many required buildings have been built. Subtract x from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
     var cost = 10;
 
     for (var i in state.actions) {
