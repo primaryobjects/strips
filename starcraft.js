@@ -1,8 +1,8 @@
-var strips = require('./strips');
+var strips = require('strips');
 strips.verbose = true;
 
 // Load the domain and problem.
-strips.load('../examples/starcraft/domain.txt', '../examples/starcraft/marine.txt', function(domain, problem) {
+strips.load('./examples/starcraft/domain.txt', './examples/starcraft/marine.txt', function(domain, problem) {
     // Use A* search to run the problem against the domain.
     var solutions = solveA(domain, problem);
 
@@ -15,8 +15,8 @@ strips.load('../examples/starcraft/domain.txt', '../examples/starcraft/marine.tx
 });
 
 function costMarine(state) {
-    // This is our A* heuristic method.
-    // Calculates the A* cost of a state. For Starcraft, the heuristic will be how many required buildings have been built. Subtract 1 from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
+    // This is our A* heuristic method to calculate the cost of a state.
+	// For Starcraft, the heuristic will be how many required buildings have been built. Subtract x from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
     var cost = 10;
 
     for (var i in state.actions) {
@@ -34,7 +34,7 @@ function costMarine(state) {
 }
 
 function solveA(domain, problem) {
-    // Find first solution using A* search.
+    // Find first solution using A* search. Starting with the initial state, we find all children by applying applicable actions on the current state, calculate the child state costs, and select the next cheapest state to visit.
     var state = problem.states[0];
     var goalState = problem.states[1];
     var depth = 0;
