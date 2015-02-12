@@ -551,16 +551,17 @@ StripsManager = {
         return result;
     },
 
-    solve: function(domain, problem, isDfs, maxSolutions) {
-        // Find solution.
+    solve: function(domain, problem, isDfs, maxSolutions, cost) {
+        // Find solution using A*, depth-first, or breadth-first search.
         if (isDfs == null) {
             isDfs = true;
         }
         
         maxSolutions = maxSolutions || 1;
 
-        return isDfs ? StripsManager.solveDfs(domain, problem.states[0], problem.states[1], maxSolutions) :
-                       StripsManager.solveBfs(domain, problem.states[0], problem.states[1], maxSolutions);
+        return cost ? StripsManager.solveAs(domain, problem.states[0], problem.states[1], cost) :
+                      (isDfs ? StripsManager.solveDfs(domain, problem.states[0], problem.states[1], maxSolutions) :
+                               StripsManager.solveBfs(domain, problem.states[0], problem.states[1], maxSolutions));
     },
 
     solveDfs: function(domain, state, goalState, maxSolutions, visited, depth) {
@@ -629,7 +630,7 @@ StripsManager = {
     },
 
     solveBfs: function(domain, state, goalState, maxSolutions) {
-        // Find first solution using breadth-first-search.
+        // Find all solutions using breadth-first-search.
         var fringe = [ { state: state, depth: 0 } ]; // Start with the initial state on the fringe.
         var visited = {};
         var depth = 0;
@@ -681,6 +682,66 @@ StripsManager = {
 
             if (StripsManager.verbose) {
                 console.log('Depth: ' + current.depth + ', ' + fringe.length + ' child states.');
+            }
+        }
+
+        return solutions;
+    },
+    
+    solveAs:function(domain, state, goalState, cost) {
+        // Find first solution using A* search, where cost is the heuristic function (h = cost(state)). Starting with the initial state, we find all children by applying applicable actions on the current state, calculate the child state costs, and select the next cheapest state to visit.
+        var depth = 0;
+        var fringe = [ { state: state, h: cost(state), g: depth } ]; // Start with the initial state on the fringe.
+        var visited = {};
+        var solutions = [];
+
+        while (fringe.length > 0) {
+            // Investigate the next state with the lowest cost.
+            var current = fringe[0];
+
+            // Remove this state from the fringe.
+            fringe.shift();
+
+            // Mark this state as visited.
+            visited[StripsManager.stateToString(current.state)] = 1;
+
+            // Check for goal.
+            if (StripsManager.isGoal(current.state, goalState)) {
+                // Compile solution path.
+                var path = [];
+                var steps = current.g;
+
+                while (current != null && current.parent != null) {
+                    // Since we move from goal backwards, add this step to the front of the array (rather than the end, otherwise it would be in reverse order).
+                    path.unshift(StripsManager.actionToString(current.action));
+                    current = current.parent;
+                }
+
+                solutions.push({ steps: steps, path: path });
+
+                return solutions;
+            }
+            else {
+                // Get child states by applying actions to current state.
+                var children = StripsManager.getChildStates(domain, current.state);
+
+                // Add the children to the fringe.
+                for (var i in children) {
+                    var child = children[i];
+                    child.parent = current;
+                    child.g = current.g + 1;
+                    child.h = cost(child.state);
+                    
+                    if (!visited[StripsManager.stateToString(child.state)]) {
+                        fringe.push(child);
+                    }
+                }
+                
+                fringe.sort(function(a, b) { return (a.h + a.g) - (b.h + b.g) });
+            }
+
+            if (StripsManager.verbose) {
+                console.log('Depth: ' + current.g + ', Current cost: ' + (current.h + current.g) + ', ' + fringe.length + ' child states.');
             }
         }
 
