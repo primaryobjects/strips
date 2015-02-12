@@ -57,7 +57,13 @@ Loads a domain and problem PDDL file and returns a domain and problem object in 
 
 #### solve(domain, problem, isDepthFirstSearch = true, maxSolutions = 1, cost = null)
 
-Searches for a solution to the given problem by using depth-first-search, breadth-first-search, or A*. The default setting uses depth-first-search and returns the first solution found. To return more solutions, set maxSolutions to a higher value. To use A* search, provide a function for the "cost" parameter, using the format cost(state), to serve as a heuristic for A*. The function should return an integer, representing the cost of the given state. See [starcraft.js](https://github.com/primaryobjects/strips/blob/master/starcraft.js) for an example. The cost function may also be passed as the 3rd parameter (ie., solve(domain, problem, cost)). Note, you can also write your own solution algorithm by using the methods below.
+Searches for a solution to the given problem by using depth-first-search, breadth-first-search, or A* search.
+
+The default setting uses depth-first-search and returns the first solution found. To return more solutions, set maxSolutions to a higher value.
+
+To use A* search, provide a function for the "cost" parameter, using the format cost(state), to serve as a heuristic for A*. The function should return an integer, representing the cost of the given state. See [starcraft.js](https://github.com/primaryobjects/strips/blob/master/starcraft.js) for an example.
+
+The cost function may also be passed as the 3rd parameter (ie., solve(domain, problem, cost)). Note, you can also write your own solution algorithm by using the methods below.
 
 #### getChildStates(domain, state)
 
