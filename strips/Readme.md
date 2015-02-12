@@ -172,25 +172,9 @@ Of course, the real power is in designing your own search algorithm using the st
 
 A* search works by using a heuristic to guide it down the path of possible moves in the domain. In this manner, it is much faster than simple breadth-first or depth-first search. It will also find an optimal solution that contains the least number of steps.
 
-Strips comes with a built-in A* search algorithm that accepts your own cost function to use as a heuristic. See the section "methods" above. You simply write your own cost function that takes "state" as input and returns an integer as the resulting cost. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) from the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt):
+Strips comes with a built-in A* search algorithm that accepts your own cost function to use as a heuristic. See the section "methods" above. You simply write your own cost function that takes "state" as input and returns an integer as the resulting cost. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) cost function for the starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt):
 
 ```javascript
-var strips = require('strips');
-strips.verbose = true;
-
-// Load the domain and problem.
-strips.load('./examples/starcraft/domain.txt', './examples/starcraft/marine.txt', function(domain, problem) {
-    // Use A* search to run the problem against the domain.
-    var solutions = strips.solve(domain, problem, cost);
-
-    // Display solution.
-    var solution = solutions[0];
-    console.log('- Solution found in ' + solution.steps + ' steps!');
-    for (var i = 0; i < solution.path.length; i++) {
-        console.log((i + 1) + '. ' + solution.path[i]);
-    }        
-});
-
 function cost(state) {
     // This is our A* heuristic method to calculate the cost of a state.
     // For Starcraft, the heuristic will be how many required buildings have been built. Subtract x from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
