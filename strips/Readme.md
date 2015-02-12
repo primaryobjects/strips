@@ -166,7 +166,7 @@ console.log('New child state');
 console.log(strips.stateToString(childState));
 ```
 
-Of course, the real power is in designing your own search algorithm using the strips methods. See the [default](https://github.com/primaryobjects/strips/blob/master/strips/strips.js#L440) search routine for an idea of how to use the methods to search.
+Of course, the real power is in designing your own search algorithm using the strips methods. See the [default](https://github.com/primaryobjects/strips/blob/master/strips/strips.js#L566) search routine for an idea of how to use the methods to search.
 
 ### A* Search
 
