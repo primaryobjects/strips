@@ -22,24 +22,24 @@ function cost(state) {
         var action = state.actions[i].action;
 
         if (action == 'in') {
-			if (state.actions[i].parameters.indexOf('ca') != -1 && state.actions[i].parameters.indexOf('p2') != -1) {
-				cost -= 20;
-			}
-			else if (state.actions[i].parameters.indexOf('cb') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
-				cost -= 20;
-			}
-			else if (state.actions[i].parameters.indexOf('cc') != -1 && state.actions[i].parameters.indexOf('p2') != -1) {
-				cost -= 20;
-			}
-			else if (state.actions[i].parameters.indexOf('cd') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
-				cost -= 20;
-			}
-			else if (state.actions[i].parameters.indexOf('ce') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
-				cost -= 20;
-			}
-			else if (state.actions[i].parameters.indexOf('cf') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
-				cost -= 20;
-			}
+            if (state.actions[i].parameters.indexOf('ca') != -1 && state.actions[i].parameters.indexOf('p2') != -1) {
+                cost -= 20;
+            }
+            else if (state.actions[i].parameters.indexOf('cb') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
+                cost -= 20;
+            }
+            else if (state.actions[i].parameters.indexOf('cc') != -1 && state.actions[i].parameters.indexOf('p2') != -1) {
+                cost -= 20;
+            }
+            else if (state.actions[i].parameters.indexOf('cd') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
+                cost -= 20;
+            }
+            else if (state.actions[i].parameters.indexOf('ce') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
+                cost -= 20;
+            }
+            else if (state.actions[i].parameters.indexOf('cf') != -1 && state.actions[i].parameters.indexOf('q2') != -1) {
+                cost -= 20;
+            }
         }
     }
     
