@@ -553,11 +553,26 @@ StripsManager = {
 
     solve: function(domain, problem, isDfs, maxSolutions, cost) {
         // Find solution using A*, depth-first, or breadth-first search.
-        if (isDfs == null) {
+        if (typeof(isDfs) == 'function' && !cost) {
+            // Allow passing cost as 3rd parameter.
+            cost = isDfs;
+        }
+        else if (isDfs == null) {
+            // If no other option specified, use depth-first-search by default.
             isDfs = true;
         }
         
         maxSolutions = maxSolutions || 1;
+
+        if (cost && typeof(cost) != 'function') {
+            console.log('ERROR: parameter "cost" must be a function to serve as the A* algorithm heuristic. Method: solve(domain, problem, isDepthFirstSearch, cost, maxSolutions). Usage: solve(domain, problem), solve(domain, problem, false), solve(domain, problem, cost).');
+            return;
+        }
+        
+        if (StripsManager.verbose) {
+            console.log('Using ' + (cost ? 'A*' : (isDfs ? 'depth' : 'breadth') + '-first-search') + '.');
+            console.log('');
+        }
 
         return cost ? StripsManager.solveAs(domain, problem.states[0], problem.states[1], cost) :
                       (isDfs ? StripsManager.solveDfs(domain, problem.states[0], problem.states[1], maxSolutions) :

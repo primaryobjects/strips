@@ -55,9 +55,9 @@ Methods
 
 Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
 
-#### solve(domain, problem, isDepthFirstSearch = true, maxSolutions = 1)
+#### solve(domain, problem, isDepthFirstSearch = true, maxSolutions = 1, cost = null)
 
-Searches for a solution to the given problem by using depth-first-search or breadth-first-search. The default setting uses depth-first-search and returns the first solution found. To return more solutions, set maxSolutions to a higher value. Note, you can write your own solution algorithm by using the methods below.
+Searches for a solution to the given problem by using depth-first-search, breadth-first-search, or A*. The default setting uses depth-first-search and returns the first solution found. To return more solutions, set maxSolutions to a higher value. To use A* search, provide a function for the "cost" parameter, using the format cost(state), to serve as a heuristic for A*. The function should return an integer, representing the cost of the given state. See [starcraft.js](https://github.com/primaryobjects/strips/blob/master/starcraft.js) for an example. The cost function may also be passed as the 3rd parameter (ie., solve(domain, problem, cost)). Note, you can also write your own solution algorithm by using the methods below.
 
 #### getChildStates(domain, state)
 
@@ -164,11 +164,34 @@ Of course, the real power is in designing your own search algorithm using the st
 
 ### A* Search
 
-You can implement your own A* search to find a solution. A* works by using a heuristic to guide it down the path of possible moves in the domain. In this manner, it is much faster than simple breadth-first or depth-first search. It will also find an optimal solution that contains the least number of steps.
+A* search works by using a heuristic to guide it down the path of possible moves in the domain. In this manner, it is much faster than simple breadth-first or depth-first search. It will also find an optimal solution that contains the least number of steps.
 
-Since the strips library exposes its internal methods, you can implement your own search algorithm. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) of an A* search method for the [starcraft](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) domain, to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt).
+Strips comes with a built-in A* search algorithm that accepts your own cost function to use as a heuristic. See the section "methods" above. You simply write your own cost function that takes "state" as input and returns an integer as the resulting cost. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) from the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt):
 
-The core idea to a custom search method is to use the strips methods isGoal() and getChildStates() to iterate through all states and actions. Once you have a list of child states, apply your heuristic to calculate a cost for each state. Then sort the states by cost so that A* can choose the next cheapest state to move to. You can see the details in the example.
+```javascript
+var solutions = strips.solve(domain, problem, cost);
+
+function cost(state) {
+    // This is our A* heuristic method to calculate the cost of a state.
+    // For Starcraft, the heuristic will be how many required buildings have been built. Subtract x from cost for each correct building, with 0 meaning all required buildings have been made and we're done.
+    var cost = 10;
+
+    for (var i in state.actions) {
+        var action = state.actions[i].action;
+
+        if (action == 'depot') {
+            cost -= 5;
+        }
+        else if (action == 'barracks') {
+            cost -= 5;
+        }
+    }
+    
+    return cost;
+}
+```
+
+You can also implement your own A* search to find a solution. Since the strips library exposes its internal methods, you can implement your own search algorithm. The core idea to a custom search method is to use the strips methods isGoal() and getChildStates() to iterate through all states and actions. Once you have a list of child states, apply your heuristic to calculate a cost for each state. Then sort the states by cost so that A* can choose the next cheapest state to move to. You can see the details in the solve() methods in strips.
 
 Have fun!
 

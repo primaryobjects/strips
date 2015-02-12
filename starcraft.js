@@ -1,10 +1,10 @@
-var strips = require('./strips');
+var strips = require('strips');
 strips.verbose = true;
 
 // Load the domain and problem.
 strips.load('./examples/starcraft/domain.txt', './examples/starcraft/marine.txt', function(domain, problem) {
     // Use A* search to run the problem against the domain.
-    var solutions = strips.solve(domain, problem, null, null, cost);
+    var solutions = strips.solve(domain, problem, cost);
 
     // Display solution.
     var solution = solutions[0];
