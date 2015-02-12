@@ -175,7 +175,21 @@ A* search works by using a heuristic to guide it down the path of possible moves
 Strips comes with a built-in A* search algorithm that accepts your own cost function to use as a heuristic. See the section "methods" above. You simply write your own cost function that takes "state" as input and returns an integer as the resulting cost. Here is an [example](https://github.com/primaryobjects/strips/blob/master/starcraft.js) from the Starcraft [domain](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/domain.txt) to train a [marine](https://github.com/primaryobjects/strips/blob/master/examples/starcraft/marine.txt):
 
 ```javascript
-var solutions = strips.solve(domain, problem, cost);
+var strips = require('strips');
+strips.verbose = true;
+
+// Load the domain and problem.
+strips.load('./examples/starcraft/domain.txt', './examples/starcraft/marine.txt', function(domain, problem) {
+    // Use A* search to run the problem against the domain.
+    var solutions = strips.solve(domain, problem, cost);
+
+    // Display solution.
+    var solution = solutions[0];
+    console.log('- Solution found in ' + solution.steps + ' steps!');
+    for (var i = 0; i < solution.path.length; i++) {
+        console.log((i + 1) + '. ' + solution.path[i]);
+    }        
+});
 
 function cost(state) {
     // This is our A* heuristic method to calculate the cost of a state.
