@@ -1,10 +1,23 @@
 program   = result:problem { return result; }
  
-problem = space* delimiter* "define" space* delimiter* "problem" space* name:word delimiter* space* domain:domain delimiter* objects:objects? delimiter* states:state*
+problem = space* delimiter* "define" space* delimiter* "problem" space* name:word delimiter* space* domain:domain delimiter* req:req? delimiter* objects:objects? delimiter* states:state*
 { return { name: name.join('').replace(/[,:? ]/g, ''), domain: domain, objects: objects, states: states }; }
  
 domain = ":domain" space* name:word delimiter*
 { return name.join('').replace(/[,:? ]/g, ''); }
+
+req = ":requirements" req:reqType* delimiter*
+{
+  var result = [];
+  for (var i in req) {
+     result.push(req[i]);
+  }
+ 
+  return result;
+}
+ 
+reqType = space* ":" req:word
+{ return req.join('').replace(/[,:?]/g, ''); }
 
 objects = ":objects" space* objects:object*
 { return objects; }
