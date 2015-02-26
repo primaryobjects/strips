@@ -1,3 +1,10 @@
+/* 
+PDDL2JSON - PEG.js (http://pegjs.org) grammar parser script for converting PDDL to JSON. Designed for strips "domain" files.
+
+Copyright (c) 2015 Kory Becker
+http://primaryobjects.com/kory-becker
+*/
+
 program   = result:domain { return result; }
  
 domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req? constants:constants? types:types* predicates:predicates? actions:action*
