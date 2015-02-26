@@ -98,7 +98,7 @@ Settings
 
 #### strips.fast
 
-By default, strips.fast == true, which uses permutationCombination to calculate possible parameter values for actions. Set this property to false to use baseN instead. Using baseN is slower, but will allow strips to utilize all possible solutions.
+Defaults to true, which uses permutationCombination to calculate possible parameter values for actions. Set this property to false to use baseN instead. Using baseN is slower, but will allow strips to utilize all possible solutions.
 
 #### strips.verbose
 
