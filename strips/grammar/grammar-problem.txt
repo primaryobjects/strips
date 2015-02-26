@@ -44,7 +44,7 @@ space     = [\n\r\t ] / comment
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
+comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\~\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
  
 parameter = param:word space*
 { return param.join('').replace(/[,:? ]/g, ''); }

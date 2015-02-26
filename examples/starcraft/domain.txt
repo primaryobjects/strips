@@ -1,3 +1,6 @@
+;; Starcraft PDDL Domain - by Kory Becker http://primaryobjects.com/kory-becker
+;; Example from the node.js strips library http://npmjs.org/strips
+
 (define (domain starcraft)
   (:requirements :strips :typing)
   (:types builder building area)

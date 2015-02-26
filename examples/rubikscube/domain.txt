@@ -1,5 +1,6 @@
 ;;;
 ;;; 1D Rubik's cube
+;;; http://www.hakank.org/pddl/
 ;;;
 ;;; From
 ;;; http://www.mail-archive.com/programming@jsoftware.com/msg05817.html

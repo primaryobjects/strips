@@ -1,5 +1,6 @@
 ;;;
 ;;;  1 3 2 6 5 4
+;;;  Use breadth-first search.
 ;;;
 (define (problem rubik-01)
    (:domain rubik-1d)

@@ -74,7 +74,7 @@ space     = [\n\r\t ] / comment
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
+comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\~\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
 
 parameters = space* ":parameters" delimiter+ params:parameter+ delimiter space*
 { return params; }
