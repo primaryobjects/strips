@@ -1,13 +1,8 @@
 program   = result:domain { return result; }
  
-domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req types:types* predicates:predicates? actions:action*
+domain = space* delimiter* "define" space* delimiter* "domain" space* domainName:word delimiter* req:req? constants:constants? types:types* predicates:predicates? actions:action*
 {
-  var reqs = '';
-  for (var i in req) {
-     reqs += req[i] + ', ';
-  }
- 
-  return { domain: domainName.join('').replace(/[,:?]/g, ''), requirements: req, types: types ? types[0] : null, actions: actions };
+  return { domain: domainName.join('').replace(/[,:?]/g, ''), requirements: req || [], types: types ? types[0] : null, actions: actions };
 }
  
 req = ":requirements" req:reqType* delimiter*
@@ -36,6 +31,19 @@ types = ":types" names:typeName* delimiter*
 typeName = space* name:word
 { return name.join('').replace(/[,:?]/g, ''); }
 
+constants = ":constants" space* names:constant+ delimiter*
+{
+  var result = [];
+  for (var i in names) {
+     result.push(names[i]);
+  }
+ 
+  return result;
+}
+
+constant = name:word+ space*
+{ return name.join('').replace(/[,:?]/g, ''); }
+
 predicates = ":predicates" space* pred:predicate* delimiter*
 {
   var result = [];
@@ -46,7 +54,7 @@ predicates = ":predicates" space* pred:predicate* delimiter*
   return result;
 }
 
-predicate = delimiter* name:word+ space* param:parameterTyped+
+predicate = delimiter* name:word+ space* param:parameterTyped*
 {
    return { name: name.join('').replace(/[,:?]/g, ''), parameters: param };
 }
@@ -66,7 +74,7 @@ space     = [\n\r\t ] / comment
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
+comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
 
 parameters = space* ":parameters" delimiter+ params:parameter+ delimiter space*
 { return params; }

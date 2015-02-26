@@ -22,7 +22,7 @@ reqType = space* ":" req:word
 objects = ":objects" space* objects:object*
 { return objects; }
 
-object = parameters:objectName+ "-" space* type:alphanum space*
+object = parameters:objectName+ "-"? space* type:alphanum? space*
 { return { parameters: parameters, type: type }; }
 
 objectName = name:alphanum space*
@@ -44,7 +44,7 @@ space     = [\n\r\t ] / comment
 paren     = "(" / ")"
 logicOp   = "and" / "not"
 delimiter = paren / space
-comment   = ";" [a-zA-Z0-9\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
+comment   = ";" [a-zA-Z0-9\_\-\;\?\.\:\!\@\#\$\%\^\&\*\(\)\[\]\{\}\'\"\<\>\,\/\\ ]* [\n\r]
  
 parameter = param:word space*
 { return param.join('').replace(/[,:? ]/g, ''); }
