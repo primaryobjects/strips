@@ -13,8 +13,8 @@ License MIT
 */
 
 StripsManager = {
-    // Set to true to use permutationCombination() instead of baseN() for parameter values. It will be faster, but might miss some solutions.
-    fast: false,
+    // Set to false to use baseN() instead of permutationCombination() for parameter values. It will be slower, but will utilize all possible solutions.
+    fast: true,
     // Set to true to display status information on the console while searching for a solution.
     verbose: false,
     // PEG.js grammar for domain.
