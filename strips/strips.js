@@ -912,7 +912,7 @@ StripsManager = {
             result.push(layer);
 
             // Get next graph layer.
-            layer = nextGraphLayer(domain, result[index++], isVerbose);
+            layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
         }
 
         return result;
