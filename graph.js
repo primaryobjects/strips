@@ -1,5 +1,4 @@
-'use strict'
-
+// Run using: node --harmony graph
 var strips = require('./strips/strips');
 var util = require('util');
 var fs = require('fs');
@@ -160,8 +159,8 @@ function drawTree(treeData, window) {
 
 function drawGraph(window) {
     var el = window.document.querySelector('#dataviz-container');
-
     var margin = {top: 20, right: 120, bottom: 20, left: 120}, width = 960 - margin.right - margin.left, height = 500 - margin.top - margin.bottom;
+    var isHorizontal = true;
     var i = 0;
     var tree = d3.layout.tree().size([height, width]);
     var diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x]; });
@@ -204,58 +203,55 @@ function drawGraph(window) {
     var force = d3.layout.force()
         .nodes(json.nodes)
         .links(json.liks)
-        .gravity(.05)
+        .gravity(0.05)
         .distance(100)
-        .charge(-350)
+        .charge(-300)
         .size([960, 500]);
 
-var link = svg.selectAll(".link")
-      .data(json.links)
-    .enter().append("line")
-      .attr("class", "link")
-    .style('stroke', '#ccc');
+    var link = svg.selectAll(".link")
+        .data(json.links)
+        .enter().append("line")
+        .attr("class", "link")
+        .style('stroke', '#ccc');
 
-  var node = svg.selectAll(".node")
-      .data(json.nodes)
-    .enter().append("g")
-      .attr("r", 6 - .75)
-      .attr("class", "node")
-      .style("fill", function(d) { return d3.scale.category20()(d.group); })
-      .style("stroke", function(d) { return d3.rgb(d3.scale.category20()(d.group)).darker(); });
-      //.call(force.drag);        
+    var node = svg.selectAll(".node")
+        .data(json.nodes)
+        .enter().append("g")
+        .attr("r", 6 - .75)
+        .attr("class", "node")
+        .style("fill", function(d) { return d3.scale.category20()(d.group); })
+        .style("stroke", function(d) { return d3.rgb(d3.scale.category20()(d.group)).darker(); });
 
- node.append('circle')
-     .attr("r", 10 - .75)
-      .attr("class", "node")
-      .style("fill", '#fff')
-      .style("stroke", 'steelblue');
+    node.append('circle')
+        .attr("r", 10 - .75)
+        .attr("class", "node")
+        .style("fill", '#fff')
+        .style("stroke", 'steelblue');
 
- node.append("text")
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(d) { return d.name })
+    node.append("text")
+        .attr("dx", 12)
+        .attr("dy", ".35em")
+        .text(function(d) { return d.name })
         .style('font', '8px sans-serif')
         .style('color', '#000');
 
-force.on("tick", function(e) {
-      var k = 6 * e.alpha;
-    json.links.forEach(function(d, i) {
-      d.source.y -= k;
-      d.target.y += k;
+    force.on("tick", function(e) {
+        var k = 6 * e.alpha;
+
+        json.links.forEach(function(d, i) {
+            d.source.y -= k;
+            d.target.y += k;
+        });
+
+        link.attr("x1", function(d) { return (isHorizontal ? d.source.y : d.source.x); })
+        .attr("y1", function(d) { return (isHorizontal ? d.source.x : d.source.y); })
+        .attr("x2", function(d) { return (isHorizontal ? d.target.y : d.target.x); })
+        .attr("y2", function(d) { return (isHorizontal ? d.target.x : d.target.y); });
+
+        node.attr("transform", function(d) { return "translate(" + (isHorizontal ? d.y : d.x) + "," + (isHorizontal ? d.x : d.y) + ")"; });
     });
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
 
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-});
-
-  force
-      .nodes(json.nodes)
-      .links(json.links)
-      .start();
-
+    force.nodes(json.nodes).links(json.links).start();
     for (var i = 1000; i > 0; --i) force.tick();
     force.stop();
 
