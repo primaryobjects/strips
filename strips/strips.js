@@ -261,20 +261,22 @@ StripsManager = {
         return result;
     },
 
-    isPreconditionSatisfied: function(state, precondition) {
+    isPreconditionSatisfied: function(state, precondition, allowNegatives) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
         var matchCount = 0;
-        var andCount = StripsManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
+        var andCount = allowNegatives ? precondition.length : StripsManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
 
         for (var i = 0; i < precondition.length; i++) {
             // Find a case that contains this action and parameters.
             for (var l in state.actions) {
                 var match = true;
                 operation = precondition[i].operation || 'and'; // If no operation is specified, default to 'and'. Must explicitly provide 'not' where required.
+                var op1 = state.actions[l].operation || 'and';
+                var op2 = precondition[i].operation || 'and';
 
                 // Check if the name and number of parameters match for the current action and precondition.
-                if (state.actions[l].action == precondition[i].action && state.actions[l].parameters.length == precondition[i].parameters.length) {
+                if (((allowNegatives && op1 == op2) || !allowNegatives) && state.actions[l].action == precondition[i].action && state.actions[l].parameters.length == precondition[i].parameters.length) {
                     // Check if the parameter values match.
                     for (var m in precondition[i].parameters) {
                         if (precondition[i].parameters[m] != state.actions[l].parameters[m]) {
@@ -288,13 +290,18 @@ StripsManager = {
 
                 if (match) {
                     // This action exists in the state.
-                    if (operation == 'and') {
+                    if (allowNegatives) {
                         matchCount++;
                     }
                     else {
-                        // Not, set to -1 so this action is not saved as applicable.
-                        matchCount = -1;
-                        break;
+                        if (operation == 'and') {
+                            matchCount++;
+                        }
+                        else {
+                            // Not, set to -1 so this action is not saved as applicable.
+                            matchCount = -1;
+                            break;
+                        }
                     }
                 }
             }
@@ -306,12 +313,12 @@ StripsManager = {
         return (matchCount == andCount);
     },
 
-    getApplicableActionInState: function(state, action) {
+    getApplicableActionInState: function(state, action, allowNegatives) {
         // This function returns an applicable concrete action for the given state, or null if the precondition is not satisfied.
         var resolvedAction = null;
 
         // Does the filled-in precondition exist in the state test cases?
-        if (StripsManager.isPreconditionSatisfied(state, action.precondition)) {
+        if (StripsManager.isPreconditionSatisfied(state, action.precondition, allowNegatives)) {
             // This action is applicable.
             // Assign a value to each parameter of the effect.
             var populatedEffect = JSON.parse(JSON.stringify(action.effect));
@@ -340,7 +347,38 @@ StripsManager = {
         return resolvedAction;
     },
     
-    applicableActions: function(domain, state) {
+    applicableActionsPlus: function(domain, state) {
+        // Returns an array of applicable concrete actions for the current state, including support for negative literals. This method runs StripsManager.applicableActions() two times - one normally, and one with allowNegatives = true. The result includes a list of unique actions.
+        var result = [];
+        var actionHash = {};
+
+        // Get applicable actions.
+        var actions = StripsManager.applicableActions(domain, state);
+
+        // Mark each action as discovered.
+        for (var i in actions) {
+            var action = actions[i];
+
+            result.push(action);
+            actionHash[JSON.stringify(action)] = 1;
+        }
+
+        // Get applicable actions when allowing for negative literals.
+        actions = StripsManager.applicableActions(domain, state, true);
+
+        // Concat new actions.
+        for (var i in actions) {
+            var action = actions[i];
+
+            if (!actionHash[JSON.stringify(action)]) {
+              result.push(action);
+            }
+        }
+
+        return result;
+    },
+
+    applicableActions: function(domain, state, allowNegatives) {
         // Returns an array of applicable concrete actions for the current state, using the possible parameter values in domain.values array (Example: values = ['a', 'b', 't1', 't2', 't3']).
         // Test each domain action precondition against the cases. If one holds valid, then that action is applicable in the current state.
         var result = [];
@@ -390,7 +428,7 @@ StripsManager = {
                 }
 
                 // Does the filled-in precondition exist in the test cases?
-                var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction);
+                var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction, allowNegatives);
                 if (applicableAction) {
                     // This action is applicable in this state. Make sure we haven't already found this one.
                     var isDuplicate = false;
@@ -761,6 +799,123 @@ StripsManager = {
         }
 
         return solutions;
+    },
+
+    nextGraphLayer: function(domain, parentLayer, isVerbose) {
+        // Builds the next planning graph layer, based upon the previous layer. In each action, 'precondition' represents parent literals. 'effect' represents child literals.
+        // Returns a 3-tier layer, consisting of P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = all actions not named 'noop', P1 = effect.
+        var layer = [];
+        var literalHash = {};
+        var literalHash2 = {};
+        var literalCount = 0;
+        var nextLiteralCount = 0;
+        var actionCount = 0;
+
+        // Pack all literals from actions in this layer into a single array.
+        var children = { effect: [] };
+        for (var i in parentLayer) {
+            for (var j in parentLayer[i].effect) {
+                var literal = parentLayer[i].effect[j];
+
+                if (!literalHash[JSON.stringify(literal)]) {
+                    children.effect.push(literal);
+
+                    // P2 - Carry forward literals from parent, using noop actions.
+                    var noop = { action: 'noop' };
+                    noop.precondition = noop.precondition || [];
+                    noop.precondition.push(literal);
+                    noop.effect = noop.precondition;
+                    layer.push(noop);
+
+                    literalHash[JSON.stringify(literal)] = 1;
+            
+                    // Keep a count of all literals in this layer so we know if we found any new ones after graphing.
+                    literalCount++;
+
+                    if (parentLayer[i].action == 'noop') {
+                        nextLiteralCount++;
+                        literalHash2[JSON.stringify(literal)] = 1;
+                    }
+                }
+            }
+        }
+
+        // A1 - Get all applicable actions for the state.
+        var actions = StripsManager.applicableActionsPlus(domain, { actions: children.effect });
+        actionCount = actions.length;
+        for (var i in actions) {
+            var action = actions[i];
+
+            // Add action to the layer, preconditions are the parents, effects are the children.
+            layer.push(action);
+
+            for (var j in action.effect) {
+                var literal = action.effect[j];
+
+                if (!literalHash2[JSON.stringify(literal)]) {
+                    nextLiteralCount++;
+                    literalHash2[JSON.stringify(literal)] = 1;
+                }
+            }    
+        }
+
+        if (isVerbose) {
+            console.log('New Literals: ' + nextLiteralCount + ', Last Literals: ' + literalCount + ', New Actions: ' + actionCount + ', Last Actions: ' + lastActionCount);
+        }
+
+        // If we discovered new literals or new actions, then return the layer and continue building the graph.
+        if (nextLiteralCount > literalCount || actionCount != lastActionCount) {
+            lastActionCount = actionCount;
+
+            return layer;
+        }
+        else {
+            // No change, no new literals.
+            return null;
+        }
+    },
+
+    graph: function(domain, problem, isVerbose) {
+        // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
+        // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
+        // Loops, building new graph layers, until no new literals and no new actions are discovered.
+        var result = [];
+        var layer = [];
+        var actionHash = {};
+
+        // P0 - initial literals.
+        for (var i in problem.states[0].actions) {
+            // P1 - B. Carry forward literals from parent.
+            var noop = { action: 'noop' };
+            noop.precondition = noop.precondition || [];
+            noop.precondition.push(problem.states[0].actions[i]);
+            noop.effect = noop.precondition;
+            layer.push(noop);    
+        }
+
+        // A0 - Get all applicable actions for the initial state.
+        var actions = StripsManager.applicableActionsPlus(domain, problem.states[0]);
+        lastActionCount = actions.length;
+        layer = layer.concat(actions);
+
+        // Add the literals, actions, next literals to the graph (P0, A0, P1).
+        result.push(layer);
+
+        // Next layer.
+        var index = 0;
+        var layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
+        while (layer != null) {
+            if (isVerbose) {
+                console.log('Processing layer ' + index);
+            }
+
+            result.push(layer);
+
+            // Get next graph layer.
+            layer = nextGraphLayer(domain, result[index++], isVerbose);
+        }
+
+        return result;
     }
 };
 
