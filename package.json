@@ -9,7 +9,10 @@
   },
   "dependencies": {
     "pegjs": "*",
-	"strips": "*"
+	"strips": "*",
+    "d3": "*",
+    "jsdom": "*",
+    "xmldom": "*"
   },
   "engines": {
     "node": "*",
