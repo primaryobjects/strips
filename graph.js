@@ -1,4 +1,7 @@
+//
+// Builds a planning graph for a given domain and problem. Renders the graph using d3.js and saves to a file graph.svg.
 // Run using: node --harmony graph
+//
 var strips = require('./strips/strips');
 var util = require('util');
 var fs = require('fs');
@@ -15,6 +18,8 @@ strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', f
     var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
+
+        // Display an image of the planning graph at layer 0.
         //drawTree(getTreeData(graph, 0), window);
         drawGraph(getGraphData(graph, 0), window);
     }});
