@@ -9,14 +9,14 @@ var xmldom = require('xmldom');
 var lastActionCount = 0;
 
 // Load the domain and problem.
-strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
+strips.load('./examples/cake/domain.pddl', './examples/cake/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem);
 
     var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
         //drawTree(getTreeData(graph, 0), window);
-        drawGraph(getGraphData(graph, 0), window);
+        drawGraph(getGraphData(graph, 1), window);
     }});
 });
 
@@ -206,8 +206,7 @@ function drawGraph(treeData, window) {
 
     var force = d3.layout.force()
         .gravity(.05)
-        .charge(-600)
-        .distance(50)
+        .charge(-500)
         .size([width, height]);
 
     var svg = d3.select(el).append("svg:svg")
@@ -221,6 +220,11 @@ function drawGraph(treeData, window) {
         d.x = width/2 + i;
         d.y = 100*d.depth + 100;
     });
+
+    // Set root node position.
+    nodes[0].fixed = true;
+    nodes[0].x = width / 3;
+    nodes[0].y = 50;
 
     force.nodes(nodes)
         .links(links)
@@ -290,7 +294,7 @@ function drawGraph(treeData, window) {
         });
     });
 
-    for (var i = 1000; i > 0; --i) force.tick();
+    for (var i = 10000; i > 0; --i) force.tick();
     force.stop();
 
     saveGraph(d3, el, 'graph.svg');
