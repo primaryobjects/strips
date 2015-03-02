@@ -9,14 +9,14 @@ var xmldom = require('xmldom');
 var lastActionCount = 0;
 
 // Load the domain and problem.
-strips.load('./examples/cake/domain.pddl', './examples/cake/problem.pddl', function(domain, problem) {
+strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem);
 
     var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
         //drawTree(getTreeData(graph, 0), window);
-        drawGraph(getGraphData(graph, 1), window);
+        drawGraph(getGraphData(graph, 0), window);
     }});
 });
 
