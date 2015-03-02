@@ -1,27 +1,27 @@
 {
-  "name": "strips-demo",
-  "version": "0.0.3",
-  "description": "Basic AI planning with STRIPS and PDDL.",
-   "author": {
-    "name": "Kory Becker",
-    "email": "kbecker@primaryobjects.com",
-    "url": "http://www.primaryobjects.com/kory-becker"
-  },
-  "dependencies": {
-    "pegjs": "*",
-	"strips": "*",
-    "d3": "*",
-    "jsdom": "*",
-    "xmldom": "*"
-  },
-  "engines": {
-    "node": "*",
-    "npm": "*"
-  },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "http://opensource.org/licenses/MIT"
-    }
-  ]
+    "name": "strips-demo",
+    "version": "0.0.3",
+    "description": "Basic AI planning with STRIPS and PDDL.",
+     "author": {
+        "name": "Kory Becker",
+        "email": "kbecker@primaryobjects.com",
+        "url": "http://www.primaryobjects.com/kory-becker"
+    },
+    "dependencies": {
+        "pegjs": "*",
+        "strips": "*",
+        "d3": "*",
+        "jsdom": "*",
+        "xmldom": "*"
+    },
+    "engines": {
+        "node": "*",
+        "npm": "*"
+    },
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "http://opensource.org/licenses/MIT"
+        }
+    ]
 }

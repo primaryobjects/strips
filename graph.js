@@ -217,15 +217,14 @@ function drawTree(treeData, window) {
     // Enter the links.
     link.enter().insert("path", "g").style({"fill-opacity": 1, 'fill': 'none', stroke: '#ccc', 'stroke-width': '2px'}).attr("d", diagonal);
 
-    var svgGraph = d3.select(el).select('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
-    var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
-    fs.writeFile('graph.svg', svgXML);
+    saveGraph(d3, el, 'graph.svg');
 }
 
 function drawGraph(treeData, window) {
     var el = window.document.querySelector('#dataviz-container');
-    var width = 800,
-        height = 800;
+    var width = 800;
+    var height = 1200;
+    var isHorizontal = true;
 
     var force = d3.layout.force()
         .gravity(.05)
@@ -240,10 +239,10 @@ function drawGraph(treeData, window) {
     var nodes = treeData.nodes,
         links = treeData.links;
 
-        nodes.forEach(function(d, i) {
-            d.x = width/2 + i;
-            d.y = 100*d.depth + 100;
-        });
+    nodes.forEach(function(d, i) {
+        d.x = width/2 + i;
+        d.y = 100*d.depth + 100;
+    });
 
     force.nodes(nodes)
         .links(links)
@@ -251,7 +250,7 @@ function drawGraph(treeData, window) {
 
     var link = svg.selectAll("line")
         .data(links)
-       .enter()
+        .enter()
         .insert("svg:line")
         .attr("class", "link")
         .style('stroke', '#ccc');
@@ -303,20 +302,26 @@ function drawGraph(treeData, window) {
             };
         });
 
-        link.attr("x1", function(d) { return d.source.y; })
-            .attr("y1", function(d) { return d.source.x; })
-            .attr("x2", function(d) { return d.target.y; })
-            .attr("y2", function(d) { return d.target.x; });
+        link.attr("x1", function(d) { return isHorizontal ? d.source.y : d.source.x; })
+            .attr("y1", function(d) { return isHorizontal ? d.source.x : d.source.y; })
+            .attr("x2", function(d) { return isHorizontal ? d.target.y : d.target.x; })
+            .attr("y2", function(d) { return isHorizontal ? d.target.x : d.target.y; });
 
         gnodes.attr("transform", function(d) { 
-            return 'translate(' + [d.y, d.x] + ')'; 
+            return 'translate(' + [isHorizontal ? d.y : d.x, isHorizontal ? d.x : d.y] + ')'; 
         });
     });
 
     for (var i = 1000; i > 0; --i) force.tick();
     force.stop();
 
+    saveGraph(d3, el, 'graph.svg');
+}
+
+function saveGraph(d3, el, fileName) {
+    // Save a d3 graph to an svg file.
     var svgGraph = d3.select(el).select('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
     var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
-    fs.writeFile('graph.svg', svgXML);
+    
+    fs.writeFile(fileName, svgXML);
 }

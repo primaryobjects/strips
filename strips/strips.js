@@ -261,22 +261,20 @@ StripsManager = {
         return result;
     },
 
-    isPreconditionSatisfied: function(state, precondition, allowNegatives) {
+    isPreconditionSatisfied: function(state, precondition) {
         // Returns true if the precondition is satisfied in the current state.
         // This function works by making sure all 'and' preconditions exist in the state, and that all 'not' preconditions do not exist in the state.
         var matchCount = 0;
-        var andCount = allowNegatives ? precondition.length : StripsManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
+        var andCount = StripsManager.andCount(precondition); // The state needs to contain the actions in action.precondition for 'and'. For 'not', we fail immediately. So, let's count the number of 'and' matches and make sure we satisfy them.
 
         for (var i = 0; i < precondition.length; i++) {
             // Find a case that contains this action and parameters.
             for (var l in state.actions) {
                 var match = true;
                 operation = precondition[i].operation || 'and'; // If no operation is specified, default to 'and'. Must explicitly provide 'not' where required.
-                var op1 = state.actions[l].operation || 'and';
-                var op2 = precondition[i].operation || 'and';
 
                 // Check if the name and number of parameters match for the current action and precondition.
-                if (((allowNegatives && op1 == op2) || !allowNegatives) && state.actions[l].action == precondition[i].action && state.actions[l].parameters.length == precondition[i].parameters.length) {
+                if (state.actions[l].action == precondition[i].action && state.actions[l].parameters.length == precondition[i].parameters.length) {
                     // Check if the parameter values match.
                     for (var m in precondition[i].parameters) {
                         if (precondition[i].parameters[m] != state.actions[l].parameters[m]) {
@@ -289,19 +287,14 @@ StripsManager = {
                 }
 
                 if (match) {
-                    // This action exists in the state.
-                    if (allowNegatives) {
+                    // This action exists in the state.                    
+                    if (operation == 'and') {
                         matchCount++;
                     }
                     else {
-                        if (operation == 'and') {
-                            matchCount++;
-                        }
-                        else {
-                            // Not, set to -1 so this action is not saved as applicable.
-                            matchCount = -1;
-                            break;
-                        }
+                        // Not, set to -1 so this action is not saved as applicable.
+                        matchCount = -1;
+                        break;
                     }
                 }
             }
@@ -313,12 +306,12 @@ StripsManager = {
         return (matchCount == andCount);
     },
 
-    getApplicableActionInState: function(state, action, allowNegatives) {
+    getApplicableActionInState: function(state, action) {
         // This function returns an applicable concrete action for the given state, or null if the precondition is not satisfied.
         var resolvedAction = null;
 
         // Does the filled-in precondition exist in the state test cases?
-        if (StripsManager.isPreconditionSatisfied(state, action.precondition, allowNegatives)) {
+        if (StripsManager.isPreconditionSatisfied(state, action.precondition)) {
             // This action is applicable.
             // Assign a value to each parameter of the effect.
             var populatedEffect = JSON.parse(JSON.stringify(action.effect));
@@ -348,12 +341,24 @@ StripsManager = {
     },
     
     applicableActionsPlus: function(domain, state) {
-        // Returns an array of applicable concrete actions for the current state, including support for negative literals. This method runs StripsManager.applicableActions() two times - one normally, and one with allowNegatives = true. The result includes a list of unique actions.
+        // Returns an array of applicable concrete actions for the current state, including support for negative literals. This method runs StripsManager.applicableActions() two times - one with all positive literals (negative literals removed, which effectively renders all positive literal cases), and one with all positive literals with none that had matching negative literals (which effectively renders all negative literal cases). The result includes a list of unique actions.
         var result = [];
         var actionHash = {};
 
+        // Remove negative literals.
+        var stateNoNegatives = JSON.parse(JSON.stringify(state));
+        stateNoNegatives.actions = [];
+        for (var i in state.actions) {
+            var action = state.actions[i];
+
+            if (action.operation != 'not') {
+                // Not a negative literal, so keep it.
+                stateNoNegatives.actions.push(action);
+            }
+        }
+
         // Get applicable actions.
-        var actions = StripsManager.applicableActions(domain, state);
+        var actions = StripsManager.applicableActions(domain, stateNoNegatives);
 
         // Mark each action as discovered.
         for (var i in actions) {
@@ -363,8 +368,40 @@ StripsManager = {
             actionHash[JSON.stringify(action)] = 1;
         }
 
+        // Remove matching positive and negative literals, effectively rendering the negative literal.
+        var literalsToRemove = {};
+        var stateNoPositiveNegatives = JSON.parse(JSON.stringify(state));
+        stateNoPositiveNegatives.actions = [];
+
+        // First, collect negative literals.
+        for (var i in state.actions) {
+            var action = state.actions[i];
+            action.operation = action.operation || 'and';
+
+            if (action.operation == 'not') {
+                // Make a copy of the positive version of this literal.
+                var copyAction = JSON.parse(JSON.stringify(action));
+                copyAction.operation = 'and';
+
+                // Mark the positive version of this literal to be removed (if we come across it).
+                literalsToRemove[JSON.stringify(copyAction)] = 1;
+            }
+        }
+
+        // Now that we've marked negative literals, go through all literals and only keep those which are positive and not included in the literalsToRemove.
+        for (var i in state.actions) {
+            var action = state.actions[i];
+            action.operation = action.operation || 'and';
+
+            // If this is a positive literal and not in our literalsToRemove list, then include it.
+            if (action.operation != 'not' && !literalsToRemove[JSON.stringify(action)]) {
+                // Safe to keep this literal.
+                stateNoPositiveNegatives.actions.push(action);
+            }
+        }
+
         // Get applicable actions when allowing for negative literals.
-        actions = StripsManager.applicableActions(domain, state, true);
+        actions = StripsManager.applicableActions(domain, stateNoPositiveNegatives);
 
         // Concat new actions.
         for (var i in actions) {
@@ -378,7 +415,7 @@ StripsManager = {
         return result;
     },
 
-    applicableActions: function(domain, state, allowNegatives) {
+    applicableActions: function(domain, state) {
         // Returns an array of applicable concrete actions for the current state, using the possible parameter values in domain.values array (Example: values = ['a', 'b', 't1', 't2', 't3']).
         // Test each domain action precondition against the cases. If one holds valid, then that action is applicable in the current state.
         var result = [];
@@ -428,7 +465,7 @@ StripsManager = {
                 }
 
                 // Does the filled-in precondition exist in the test cases?
-                var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction, allowNegatives);
+                var applicableAction = StripsManager.getApplicableActionInState(state, populatedAction);
                 if (applicableAction) {
                     // This action is applicable in this state. Make sure we haven't already found this one.
                     var isDuplicate = false;
@@ -875,7 +912,7 @@ StripsManager = {
         }
     },
 
-    graph: function(domain, problem, isVerbose) {
+    graph: function(domain, problem, maxLayers, isVerbose) {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
@@ -904,7 +941,7 @@ StripsManager = {
         // Next layer.
         var index = 0;
         var layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
-        while (layer != null) {
+        while (layer != null && (!maxLayers || index < maxLayers)) {
             if (isVerbose) {
                 console.log('Processing layer ' + index);
             }
