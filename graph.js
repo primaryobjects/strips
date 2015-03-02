@@ -12,11 +12,26 @@ var lastActionCount = 0;
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem, true);
 
+    var treeData = getTreeData(graph, 0);
+    var graphData = getGraphData(graph, 0);
+
+    //console.log(util.inspect(treeData, true, 100, true));
+    //console.log(util.inspect(graph, true, 100, true));
+
+    var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
+    jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
+        // Process the html document, like if we were at client side.
+        //drawTree(treeData, window);
+        drawGraph(graphData, window);
+    }});
+});
+
+function getTreeData(graph, layerIndex) {
     // Convert the graph into a d3 tree format, so we can plot the graph.
     var treeData = [ { name: 'root', parent: 'null' }];
     var parent = [];
 
-    var i = 0; // layer of graph to print
+    var i = layerIndex; // layer of graph to print
     var layer = graph[i];
     var actionHash = {};
     var actionHash2 = {};
@@ -71,36 +86,86 @@ strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', f
                 name += act.parameters[l] + ' ';
             }
 
-            /*p1 = actionHash2[name];
+            p1 = actionHash2[name];
             var ok = false;
             if (!p1) {
-                ok = true;*/
+                ok = true;
                 p1 = { name: name, parent: node.name, children: [] };
-                /*actionHash2[name] = p1;
+                actionHash2[name] = p1;
             }
             else {
                 // This node has multiple parents!!
-                p1.parent = [ p1.parent, node ];
+                p1 = { name: name, parent: node.name, children: [] };
+                p1.parents = actionHash2[name].parents || [ node.name ];
+                p1.parents.push(actionHash2[name].parent);
+                ok = true;
+                actionHash2[name] = p1;
             }
 
-            if (ok) {*/
+            if (ok) {
                 node.children.push(p1);
-            //}
+            }
         }
     }
 
     treeData[0].children = parent;
 
-    //console.log(util.inspect(treeData, true, 100, true));
-    console.log(util.inspect(graph, true, 100, true));
+    return treeData;
+}
 
-    var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
-    jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
-        // Process the html document, like if we were at client side.
-        //drawTree(treeData, window);
-        drawGraph(window);
-    }});
-});
+function getGraphData(graph, layerIndex) {
+    // Convert the graph into a d3 force format, so we can plot the graph.
+    var data = { nodes: [ { name: 'root', depth: 0 }], links: [] };
+    var node2Hash = {};
+    var node3Hash = {};
+
+    var tree = getTreeData(graph, layerIndex);
+
+    // Convert the d3 tree data format into a nodes/links force format.
+    for (var i in tree[0].children) {
+        var node = tree[0].children[i];
+
+        data.nodes.push({ name: node.name, depth: 1 });
+        var parentIndex = data.nodes.length - 1;
+        data.links.push({ source: 0, target: parentIndex, depth: 1 });
+
+        for (var j in node.children) {
+            var node2 = node.children[j];
+
+            if (node2.name.indexOf('noop') != -1 || !node2Hash[node2.name]) {
+                data.nodes.push({ name: node2.name, depth: 2 });
+                data.links.push({ source: parentIndex, target: data.nodes.length - 1, depth: 2 });
+
+                // Remember this node, in case we need to link to it again.
+                node2Hash[node2.name] = data.nodes.length - 1;
+            }
+            else {
+                // This node already exists, so link to it.
+                data.links.push({ source: parentIndex, target: node2Hash[node2.name], depth: 2 });
+            }
+
+            var parentIndex2 = data.nodes.length - 1;
+
+            for (var k in node2.children) {
+                var node3 = node2.children[k];
+
+                if (node3.name.indexOf('noop') != -1 || !node3Hash[node3.name]) {
+                    data.nodes.push({ name: node3.name, depth: 3 });
+                    data.links.push({ source: parentIndex2, target: data.nodes.length - 1, depth: 3 });
+
+                    // Remember this node, in case we need to link to it again.
+                    node3Hash[node3.name] = data.nodes.length - 1;
+                }
+                else {
+                    // This node already exists, so link to it.
+                    data.links.push({ source: parentIndex2, target: node3Hash[node3.name], depth: 3 });
+                }
+            }            
+        }
+    }
+
+    return data;
+}
 
 function drawTree(treeData, window) {
     var el = window.document.querySelector('#dataviz-container');
@@ -157,78 +222,58 @@ function drawTree(treeData, window) {
     fs.writeFile('graph.svg', svgXML);
 }
 
-function drawGraph(window) {
+function drawGraph(treeData, window) {
     var el = window.document.querySelector('#dataviz-container');
-    var margin = {top: 20, right: 120, bottom: 20, left: 120}, width = 960 - margin.right - margin.left, height = 500 - margin.top - margin.bottom;
-    var isHorizontal = true;
-    var i = 0;
-    var tree = d3.layout.tree().size([height, width]);
-    var diagonal = d3.svg.diagonal().projection(function(d) { return [d.y, d.x]; });
-    var svg = d3.select(el).append("svg");
-
-    var json = {
-  "nodes": [
-    {"name": "d3"},
-    {"name": "d3.svg"},
-    {"name": "d3.svg.area"},
-    {"name": "d3.svg.line"},
-    {"name": "d3.scale"},
-    {"name": "d3.scale.linear"},
-    {"name": "d3.scale.ordinal"}
-  ],
-  "links": [
-    {"source": 0, "target": 1},
-    {"source": 1, "target": 2},
-    {"source": 1, "target": 3},
-    {"source": 0, "target": 4},
-    {"source": 4, "target": 5},
-    {"source": 4, "target": 6}
-  ]
-};
-
-    svg.append("svg:defs")
-        .selectAll("marker")
-        .data(["end"]) 
-        .enter().append("svg:marker")
-        .attr("id", String)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
-        .attr("refY", -1.5)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .append("svg:path")
-        .attr("d", "M0,-5L10,0L0,5");
+    var width = 800,
+        height = 800;
 
     var force = d3.layout.force()
-        .nodes(json.nodes)
-        .links(json.liks)
-        .gravity(0.05)
-        .distance(100)
-        .charge(-300)
-        .size([960, 500]);
+        .gravity(.05)
+        .charge(-600)
+        .distance(50)
+        .size([width, height]);
 
-    var link = svg.selectAll(".link")
-        .data(json.links)
-        .enter().append("line")
+    var svg = d3.select(el).append("svg:svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    var nodes = treeData.nodes,
+        links = treeData.links;
+
+        nodes.forEach(function(d, i) {
+            d.x = width/2 + i;
+            d.y = 100*d.depth + 100;
+        });
+
+    force.nodes(nodes)
+        .links(links)
+        .start();
+
+    var link = svg.selectAll("line")
+        .data(links)
+       .enter()
+        .insert("svg:line")
         .attr("class", "link")
         .style('stroke', '#ccc');
 
-    var node = svg.selectAll(".node")
-        .data(json.nodes)
-        .enter().append("g")
-        .attr("r", 6 - .75)
-        .attr("class", "node")
-        .style("fill", function(d) { return d3.scale.category20()(d.group); })
-        .style("stroke", function(d) { return d3.rgb(d3.scale.category20()(d.group)).darker(); });
+    // Create node group.
+    var gnodes = svg.selectAll('g.gnode')
+     .data(nodes)
+     .enter()
+     .append('g')
+     .classed('gnode', true);
 
-    node.append('circle')
-        .attr("r", 10 - .75)
+    // Create nodes.
+    var node = gnodes
+        .append("circle")
+        .attr("r", 8)
         .attr("class", "node")
         .style("fill", '#fff')
-        .style("stroke", 'steelblue');
+        .style("stroke", 'steelblue')
+        .call(force.drag);
 
-    node.append("text")
+    // Create text on node groups.
+    gnodes.append("text")
         .attr("dx", 12)
         .attr("dy", ".35em")
         .text(function(d) { return d.name })
@@ -236,22 +281,38 @@ function drawGraph(window) {
         .style('color', '#000');
 
     force.on("tick", function(e) {
-        var k = 6 * e.alpha;
-
-        json.links.forEach(function(d, i) {
-            d.source.y -= k;
-            d.target.y += k;
+        var ky = e.alpha;
+        
+        links.forEach(function(d, i) {
+          d.target.y += (d.target.depth * 100 - d.target.y) * 5 * ky;
         });
 
-        link.attr("x1", function(d) { return (isHorizontal ? d.source.y : d.source.x); })
-        .attr("y1", function(d) { return (isHorizontal ? d.source.x : d.source.y); })
-        .attr("x2", function(d) { return (isHorizontal ? d.target.y : d.target.x); })
-        .attr("y2", function(d) { return (isHorizontal ? d.target.x : d.target.y); });
+        nodes.forEach(function(d, i) {
+            if(d.children) {
+                if(i>0) {
+                    var childrenSumX = 0;
+                    d.children.forEach(function(d, i) {
+                        childrenSumX += d.x;
+                    });
+                    var childrenCount = d.children.length;
+                    d.x += ((childrenSumX/childrenCount) - d.x) * 5 * ky;
+                }
+                else {
+                    d.x += (width/2 - d.x) * 5 * ky;
+                };
+            };
+        });
 
-        node.attr("transform", function(d) { return "translate(" + (isHorizontal ? d.y : d.x) + "," + (isHorizontal ? d.x : d.y) + ")"; });
+        link.attr("x1", function(d) { return d.source.y; })
+            .attr("y1", function(d) { return d.source.x; })
+            .attr("x2", function(d) { return d.target.y; })
+            .attr("y2", function(d) { return d.target.x; });
+
+        gnodes.attr("transform", function(d) { 
+            return 'translate(' + [d.y, d.x] + ')'; 
+        });
     });
 
-    force.nodes(json.nodes).links(json.links).start();
     for (var i = 1000; i > 0; --i) force.tick();
     force.stop();
 
