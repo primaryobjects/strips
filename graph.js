@@ -10,22 +10,19 @@ var lastActionCount = 0;
 
 // Load the domain and problem.
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
-    var graph = strips.graph(domain, problem, true);
-
-    var treeData = getTreeData(graph, 0);
-    var graphData = getGraphData(graph, 0);
-
-    //console.log(util.inspect(treeData, true, 100, true));
-    //console.log(util.inspect(graph, true, 100, true));
+    var graph = strips.graph(domain, problem);
 
     var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
-        //drawTree(treeData, window);
-        drawGraph(graphData, window);
+        //drawTree(getTreeData(graph, 0), window);
+        drawGraph(getGraphData(graph, 0), window);
     }});
 });
 
+//
+// Utility methods for d3.js, to convert strips json into d3.js format and plot graphs.
+//
 function getTreeData(graph, layerIndex) {
     // Convert the graph into a d3 tree format, so we can plot the graph.
     var treeData = [ { name: 'root', parent: 'null' }];
@@ -60,21 +57,19 @@ function getTreeData(graph, layerIndex) {
             }
 
             p0 = actionHash[name];
-            var ok = false;
             if (!p0) {
-                ok = true;
+                // New parent node.
                 p0 = { name: name, parent: treeData[0].name, children: [ node ] };
+                parent.push(p0);
+
                 actionHash[name] = p0;
             }
             else {
+                // This is a child node of the parent.
                 p0.children.push(node);
             }   
                          
             node.parent = p0.name;
-
-            if (ok) {
-                parent.push(p0);
-            }
         }
 
         // P1
@@ -86,25 +81,8 @@ function getTreeData(graph, layerIndex) {
                 name += act.parameters[l] + ' ';
             }
 
-            p1 = actionHash2[name];
-            var ok = false;
-            if (!p1) {
-                ok = true;
-                p1 = { name: name, parent: node.name, children: [] };
-                actionHash2[name] = p1;
-            }
-            else {
-                // This node has multiple parents!!
-                p1 = { name: name, parent: node.name, children: [] };
-                p1.parents = actionHash2[name].parents || [ node.name ];
-                p1.parents.push(actionHash2[name].parent);
-                ok = true;
-                actionHash2[name] = p1;
-            }
-
-            if (ok) {
-                node.children.push(p1);
-            }
+            p1 = { name: name, parent: node.name, children: [] };
+            node.children.push(p1);
         }
     }
 
@@ -136,7 +114,7 @@ function getGraphData(graph, layerIndex) {
                 data.nodes.push({ name: node2.name, depth: 2 });
                 data.links.push({ source: parentIndex, target: data.nodes.length - 1, depth: 2 });
 
-                // Remember this node, in case we need to link to it again.
+                // Remember this node along with its index, in case we need to link to it again.
                 node2Hash[node2.name] = data.nodes.length - 1;
             }
             else {
@@ -153,7 +131,7 @@ function getGraphData(graph, layerIndex) {
                     data.nodes.push({ name: node3.name, depth: 3 });
                     data.links.push({ source: parentIndex2, target: data.nodes.length - 1, depth: 3 });
 
-                    // Remember this node, in case we need to link to it again.
+                    // Remember this node along with its index, in case we need to link to it again.
                     node3Hash[node3.name] = data.nodes.length - 1;
                 }
                 else {
