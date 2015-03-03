@@ -908,11 +908,12 @@ StripsManager = {
         }
         else {
             // No change, no new literals.
-            return null;
+            layer.done = true;
+            return layer;
         }
     },
 
-    graph: function(domain, problem, maxLayers, isVerbose) {
+    graph: function(domain, problem, minLayers, maxLayers, isVerbose) {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
@@ -941,7 +942,7 @@ StripsManager = {
         // Next layer.
         var index = 0;
         var layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
-        while (layer != null && (!maxLayers || index < maxLayers)) {
+        while ((!layer.done || (minLayers && index < minLayers)) && (!maxLayers || index < maxLayers)) {
             if (isVerbose) {
                 console.log('Processing layer ' + index);
             }
