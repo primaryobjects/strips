@@ -1,7 +1,13 @@
-//
-// Builds a planning graph for a given domain and problem. Renders the graph using d3.js and saves to a file graph.svg.
-// Run using: node --harmony graph
-//
+/*
+Example Planning Graph - AI Planning with STRIPS and PDDL.
+Builds a planning graph for a given domain and problem. Renders the graph using d3.js and saves to a file graph.svg.
+Run using: node --harmony graph
+
+Copyright (c) 2015 Kory Becker
+http://primaryobjects.com/kory-becker
+
+License MIT
+*/
 var strips = require('./strips/strips');
 var util = require('util');
 var fs = require('fs');
