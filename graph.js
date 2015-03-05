@@ -15,8 +15,6 @@ var d3 = require('d3');
 var jsdom = require('jsdom');
 var xmldom = require('xmldom');
 
-var lastActionCount = 0;
-
 // Load the domain and problem.
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem);

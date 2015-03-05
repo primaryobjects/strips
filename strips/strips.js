@@ -168,7 +168,7 @@ StripsManager = {
             }
 
             // Get a combination of all possibilities of the discovered parameters.
-            var cmb = combinatorics.permutation(cases, parameters.length);
+            var cmb = StripsManager.fast ? combinatorics.permutation(cases, parameters.length) : combinatorics.baseN(cases, parameters.length);
 
             // Filter the combinations to valid parameter types and unique combos.
             var uniqueCombos = {};
@@ -838,14 +838,12 @@ StripsManager = {
         return solutions;
     },
 
-    nextGraphLayer: function(domain, parentLayer, isVerbose) {
+    nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals, isVerbose) {
         // Builds the next planning graph layer, based upon the previous layer. In each action, 'precondition' represents parent literals. 'effect' represents child literals.
         // Returns a 3-tier layer, consisting of P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = all actions not named 'noop', P1 = effect.
         var layer = [];
         var literalHash = {};
-        var literalHash2 = {};
         var literalCount = 0;
-        var nextLiteralCount = 0;
         var actionCount = 0;
 
         // Pack all literals from actions in this layer into a single array.
@@ -853,25 +851,23 @@ StripsManager = {
         for (var i in parentLayer) {
             for (var j in parentLayer[i].effect) {
                 var literal = parentLayer[i].effect[j];
+                literal.operation = literal.operation || 'and';
 
-                if (!literalHash[JSON.stringify(literal)]) {
-                    children.effect.push(literal);
+                if (!isSkipNegativeLiterals || (isSkipNegativeLiterals && literal.operation != 'not')) {
+                    if (!literalHash[JSON.stringify(literal)]) {
+                        children.effect.push(literal);
 
-                    // P2 - Carry forward literals from parent, using noop actions.
-                    var noop = { action: 'noop' };
-                    noop.precondition = noop.precondition || [];
-                    noop.precondition.push(literal);
-                    noop.effect = noop.precondition;
-                    layer.push(noop);
+                        // P2 - Carry forward literals from parent, using noop actions.
+                        var noop = { action: 'noop' };
+                        noop.precondition = noop.precondition || [];
+                        noop.precondition.push(literal);
+                        noop.effect = noop.precondition;
+                        layer.push(noop);
 
-                    literalHash[JSON.stringify(literal)] = 1;
-            
-                    // Keep a count of all literals in this layer so we know if we found any new ones after graphing.
-                    literalCount++;
-
-                    if (parentLayer[i].action == 'noop') {
-                        nextLiteralCount++;
-                        literalHash2[JSON.stringify(literal)] = 1;
+                        literalHash[JSON.stringify(literal)] = 1;
+                
+                        // Keep a count of all literals in this layer so we know if we found any new ones after graphing.
+                        literalCount++;
                     }
                 }
             }
@@ -881,27 +877,19 @@ StripsManager = {
         var actions = StripsManager.applicableActionsPlus(domain, { actions: children.effect });
         actionCount = actions.length;
         for (var i in actions) {
-            var action = actions[i];
-
             // Add action to the layer, preconditions are the parents, effects are the children.
-            layer.push(action);
-
-            for (var j in action.effect) {
-                var literal = action.effect[j];
-
-                if (!literalHash2[JSON.stringify(literal)]) {
-                    nextLiteralCount++;
-                    literalHash2[JSON.stringify(literal)] = 1;
-                }
-            }    
+            layer.push(actions[i]);
         }
 
         if (isVerbose) {
-            console.log('New Literals: ' + nextLiteralCount + ', Last Literals: ' + literalCount + ', New Actions: ' + actionCount + ', Last Actions: ' + lastActionCount);
+            console.log('P' + lastGraphIndex + ': ' + lastLiteralCount + ', A' + (lastGraphIndex+1) + ': ' + lastActionCount + ', P' + (lastGraphIndex+1) + ': ' + literalCount + ', A' + (lastGraphIndex+2) + ': ' + actionCount);
         }
 
+        lastGraphIndex++;
+        lastLiteralCount = literalCount;
+
         // If we discovered new literals or new actions, then return the layer and continue building the graph.
-        if (nextLiteralCount > literalCount || actionCount != lastActionCount) {
+        if (lastLiteralCount > literalCount || lastActionCount != actionCount) {
             lastActionCount = actionCount;
 
             return layer;
@@ -913,7 +901,7 @@ StripsManager = {
         }
     },
 
-    graph: function(domain, problem, minLayers, maxLayers, isVerbose) {
+    graph: function(domain, problem, minLayers, maxLayers, isSkipNegativeLiterals, isVerbose) {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
@@ -933,7 +921,12 @@ StripsManager = {
 
         // A0 - Get all applicable actions for the initial state.
         var actions = StripsManager.applicableActionsPlus(domain, problem.states[0]);
+        
+        // Initialize global graph helper counters.
+        lastLiteralCount = layer.length;
         lastActionCount = actions.length;
+        lastGraphIndex = 0;
+
         layer = layer.concat(actions);
 
         // Add the literals, actions, next literals to the graph (P0, A0, P1).
@@ -941,7 +934,7 @@ StripsManager = {
 
         // Next layer.
         var index = 0;
-        var layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
+        var layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals, isVerbose);
         while ((!layer.done || (minLayers && index < minLayers)) && (!maxLayers || index < maxLayers)) {
             if (isVerbose) {
                 console.log('Processing layer ' + index);
@@ -950,7 +943,7 @@ StripsManager = {
             result.push(layer);
 
             // Get next graph layer.
-            layer = StripsManager.nextGraphLayer(domain, result[index++], isVerbose);
+            layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals, isVerbose);
         }
 
         return result;
