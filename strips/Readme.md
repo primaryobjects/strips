@@ -77,7 +77,7 @@ The planning graph continues adding layers until no new literals and no new acti
 
 If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored. If you want to include complementary actions in the graph (such as 'Action A on A'), set strips.fast = false.
 
-See [example](https://github.com/primaryobjects/strips/blob/master/graph.js#L19-L30) of using the graph() method.
+See [example](https://github.com/primaryobjects/strips/blob/master/graph.js#L19-L30).
 
 #### getChildStates(domain, state)
 
