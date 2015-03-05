@@ -841,6 +841,7 @@ StripsManager = {
     nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals, isVerbose) {
         // Builds the next planning graph layer, based upon the previous layer. In each action, 'precondition' represents parent literals. 'effect' represents child literals.
         // Returns a 3-tier layer, consisting of P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = all actions not named 'noop', P1 = effect.
+        // If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored.
         var layer = [];
         var literalHash = {};
         var literalCount = 0;
@@ -905,6 +906,7 @@ StripsManager = {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
+        // If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored.
         var result = [];
         var layer = [];
         var actionHash = {};
