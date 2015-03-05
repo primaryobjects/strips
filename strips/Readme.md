@@ -65,6 +65,20 @@ To use A* search, provide a function for the "cost" parameter, using the format 
 
 The cost function may also be passed as the 3rd parameter (ie., solve(domain, problem, cost)). Note, you can also write your own solution algorithm by using the methods below.
 
+#### graph(domain, problem, minLayers = 0, maxLayers = 0, isSkipNegativeLiterals = false)
+
+Returns a planning [graph](https://github.com/primaryobjects/strips/blob/master/examples/dinner/images/birthday-dinner.jpg) for a [domain](https://github.com/primaryobjects/strips/blob/master/examples/dinner/domain.pddl) and [problem](https://github.com/primaryobjects/strips/blob/master/examples/dinner/problem.pddl).
+
+The planning graph is returned as an array of actions in JSON. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' (no-operation) represents an applicable action, based on the preceding literals. 'noop' is simply a placeholder action to carry each literal forward, from one layer to the next.
+
+Each layer consists of 3-tiers: P0 (literals), A1 (actions), P1 (literals). The format is: P0 = precondition, A1 = actions, P1 = effect.
+
+The planning graph continues adding layers until no new literals and no new actions are discovered.
+
+If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored. If you want to include complementary actions in the graph (such as 'Action A on A'), set strips.fast = false.
+
+Here is an [example](https://github.com/primaryobjects/strips/blob/master/graph.js) of displaying a planning [graph](https://github.com/primaryobjects/strips/blob/master/examples/dinner/images/birthday-dinner.jpg) with d3.js.
+
 #### getChildStates(domain, state)
 
 Returns an array of all valid child states from a given parent state. Each child state is returned in the format { state: state, action: action }. State is the child state. Action is the applicable action and parameter values on the parent that produced the child state.
