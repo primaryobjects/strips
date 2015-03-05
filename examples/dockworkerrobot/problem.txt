@@ -1,5 +1,5 @@
 ;; a simple DWR problem with 1 robot and 2 locations
-;; A complete planning graph for this problem (strips.fast = false, isSkipNegativeLiterals = true) should display:
+;; A complete planning graph for this problem (strips.fast: false, isSkipNegativeLiterals: true) should display:
 ;; P0: 29, A1: 3, P1: 35, A2: 16
 ;; P1: 35, A2: 16, P2: 51, A3: 62
 ;; P2: 51, A3: 62, P3: 77, A4: 144
