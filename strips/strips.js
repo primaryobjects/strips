@@ -13,7 +13,7 @@ License MIT
 */
 
 StripsManager = {
-    // Set to false to use baseN() instead of permutationCombination() for parameter values. It will be slower, but will utilize all possible solutions.
+    // Set to false to use baseN() instead of permutationCombination() for parameter values. It will be slower, but will utilize all possible solutions. This allows rendering of 'complementary actions', such as 'Action A on A', where normally you want 'Action A on B'.
     fast: true,
     // Set to true to display status information on the console while searching for a solution.
     verbose: false,
