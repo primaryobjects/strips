@@ -1,6 +1,6 @@
 {
     "name": "strips-demo",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "Basic AI planning with STRIPS and PDDL.",
      "author": {
         "name": "Kory Becker",

@@ -1,6 +1,6 @@
 {
   "name": "strips",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Basic AI planning with STRIPS and PDDL.",
    "author": {
     "name": "Kory Becker",
@@ -35,6 +35,9 @@
     "artificial intelligence",
     "ai",
     "ai planning",
+    "planning graph",
+    "partial planner",
+    "partial order plan",
     "stanford research institute problem solver",
     "problem solver",
     "planner",
@@ -43,6 +46,6 @@
     "sussman",
     "sussman anomaly"
   ],
-  "_id": "strips@0.0.6",
+  "_id": "strips@0.0.7",
   "_from": "strips"
 }
