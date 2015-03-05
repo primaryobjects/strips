@@ -838,7 +838,7 @@ StripsManager = {
         return solutions;
     },
 
-    nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals, isVerbose) {
+    nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals) {
         // Builds the next planning graph layer, based upon the previous layer. In each action, 'precondition' represents parent literals. 'effect' represents child literals.
         // Returns a 3-tier layer, consisting of P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = all actions not named 'noop', P1 = effect.
         // If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored.
@@ -882,7 +882,7 @@ StripsManager = {
             layer.push(actions[i]);
         }
 
-        if (isVerbose) {
+        if (StripsManager.verbose) {
             console.log('P' + lastGraphIndex + ': ' + lastLiteralCount + ', A' + (lastGraphIndex+1) + ': ' + lastActionCount + ', P' + (lastGraphIndex+1) + ': ' + literalCount + ', A' + (lastGraphIndex+2) + ': ' + actionCount);
         }
 
@@ -902,7 +902,7 @@ StripsManager = {
         }
     },
 
-    graph: function(domain, problem, minLayers, maxLayers, isSkipNegativeLiterals, isVerbose) {
+    graph: function(domain, problem, minLayers, maxLayers, isSkipNegativeLiterals) {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
@@ -936,16 +936,16 @@ StripsManager = {
 
         // Next layer.
         var index = 0;
-        var layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals, isVerbose);
+        var layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals);
         while ((!layer.done || (minLayers && index < minLayers)) && (!maxLayers || index < maxLayers)) {
-            if (isVerbose) {
+            if (StripsManager.verbose) {
                 console.log('Processing layer ' + index);
             }
 
             result.push(layer);
 
             // Get next graph layer.
-            layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals, isVerbose);
+            layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals);
         }
 
         return result;
