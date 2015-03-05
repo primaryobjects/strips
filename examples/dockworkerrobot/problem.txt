@@ -1,4 +1,12 @@
 ;; a simple DWR problem with 1 robot and 2 locations
+;; A complete planning graph for this problem (strips.fast = false, isSkipNegativeLiterals = true) should display:
+;; P0: 29, A1: 3, P1: 35, A2: 16
+;; P1: 35, A2: 16, P2: 51, A3: 62
+;; P2: 51, A3: 62, P3: 77, A4: 144
+;; P3: 77, A4: 144, P4: 109, A5: 244
+;; P4: 109, A5: 244, P5: 123, A6: 334
+;; P5: 123, A6: 334, P6: 127, A7: 362
+;; P6: 127, A7: 362, P7: 127, A8: 362
 (define (problem dwrpb1)
   (:domain dock-worker-robot-pos)
 
