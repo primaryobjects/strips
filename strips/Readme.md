@@ -67,7 +67,7 @@ The cost function may also be passed as the 3rd parameter (ie., solve(domain, pr
 
 #### graph(domain, problem, minLayers = 0, maxLayers = 0, isSkipNegativeLiterals = false)
 
-Returns a planning [graph](https://github.com/primaryobjects/strips/blob/master/examples/dinner/images/birthday-dinner.jpg) for a [domain](https://github.com/primaryobjects/strips/blob/master/examples/dinner/domain.pddl) and [problem](https://github.com/primaryobjects/strips/blob/master/examples/dinner/problem.pddl). See [example](https://github.com/primaryobjects/strips/blob/master/graph.js#L19-L30).
+Returns a planning [graph](https://github.com/primaryobjects/strips/blob/master/examples/dinner/images/birthday-dinner.jpg) for a [domain](https://github.com/primaryobjects/strips/blob/master/examples/dinner/domain.pddl) and [problem](https://github.com/primaryobjects/strips/blob/master/examples/dinner/problem.pddl).
 
 The planning graph is returned as an array of actions in JSON. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' (no-operation) represents an applicable action, based on the preceding literals. 'noop' is simply a placeholder action to carry each literal forward, from one layer to the next.
 
@@ -76,6 +76,8 @@ Each layer consists of 3-tiers: P0 (literals), A1 (actions), P1 (literals). The 
 The planning graph continues adding layers until no new literals and no new actions are discovered. The resulting graph can be used with [GraphPlan](http://en.wikipedia.org/wiki/Graphplan) or other search algorithms. For details on using GraphPlan, see [here](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-825-techniques-in-artificial-intelligence-sma-5504-fall-2002/lecture-notes/Lecture12FinalPart1.pdf) and [here](http://www.grastien.net/ban/teaching/06-planning5.pdf).
 
 If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored. If you want to include complementary actions in the graph (such as 'Action A on A'), set strips.fast = false.
+
+See [example](https://github.com/primaryobjects/strips/blob/master/graph.js#L19-L30) of using the graph() method.
 
 #### getChildStates(domain, state)
 
