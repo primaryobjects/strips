@@ -8,7 +8,7 @@ http://primaryobjects.com/kory-becker
 
 License MIT
 */
-var strips = require('./strips/strips');
+var strips = require('strips');
 var util = require('util');
 var fs = require('fs');
 var d3 = require('d3');
