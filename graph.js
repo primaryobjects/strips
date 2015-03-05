@@ -315,4 +315,6 @@ function saveGraph(d3, el, fileName) {
     var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
     
     fs.writeFile(fileName, svgXML);
+
+    console.log('Saved ' + fileName);
 }
