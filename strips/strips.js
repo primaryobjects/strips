@@ -949,6 +949,119 @@ StripsManager = {
         }
 
         return result;
+    },
+
+    markMutex: function(actions) {
+        // Create a hash entry for each action, for fast lookup.
+        var effectHash = {};
+        for (var i in actions) {
+            var action = actions[i];
+
+            for (var j in action.effect) {
+                var effect = action.effect[j];
+
+                // Set the effect as the hash key and its parent action as the value.
+                effectHash[JSON.stringify(effect)] = action;
+            }
+        }
+
+        actions = StripsManager.markActionsInconsistentEffects(actions, effectHash);
+        actions = StripsManager.markActionsInterference(actions, effectHash);
+
+        // Cleanup, remove mutexHash from actions.
+        for (var i in actions) {
+            delete actions[i].mutexHash;
+        }
+
+        return actions;        
+    },
+
+    markActionsInconsistentEffects: function(actions, effectHash) {
+        // Calculates mutex relationships amongst actions: effect of one action is negation of effect of another.
+        // Go through each effect and check if an opposite effect exists. If so, the actions are mutex.
+        // Check if an opposite effect exists for each effect.
+        for (var i in actions) {
+            var action = actions[i];
+
+            for (var j in action.effect) {
+                var effect = action.effect[j];
+                
+                // Does an opposite effect exist?
+                var oppositeEffect = JSON.parse(JSON.stringify(effect));
+                oppositeEffect.operation = effect.operation == 'not' ? 'and' : 'not';
+
+                var mutexAction = effectHash[JSON.stringify(oppositeEffect)];
+                if (mutexAction) {
+                    // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
+                    action.mutex = action.mutex || [];
+                    action.mutexHash = action.mutexHash || {};
+                    var obj = { action: mutexAction.action, precondition: mutexAction.precondition, effect: mutexAction.effect };
+                    var objStr = JSON.stringify(obj);
+                    if (!action.mutexHash[objStr]) {
+                        action.mutex.push(obj);
+                        action.mutexHash[objStr] = 1;
+                    }
+
+                    mutexAction.mutex = mutexAction.mutex || [];
+                    mutexAction.mutexHash = mutexAction.mutexHash || {};
+                    obj = { action: action.action, precondition: action.precondition, effect: action.effect };
+                    objStr = JSON.stringify(obj);
+                    if (!mutexAction.mutexHash[objStr]) {
+                        mutexAction.mutex.push(obj);
+                        mutexAction.mutexHash[objStr] = 1;
+                    }
+                }
+            }
+        }
+
+        return actions;
+    },
+
+    markActionsInterference: function(actions, effectHash) {
+        // Calculates mutex relationships amongst actions: one action deletes the precondition of the other.
+        // Go through each precondition and check if an opposite effect exists that is not from our own action. If so, the actions are mutex.
+        // Now check if an opposite effect exists for each precondition.
+        for (var i in actions) {
+            var action = actions[i];
+
+            if (action.action != 'noop') {
+                for (var j in action.precondition) {
+                    var precondition = action.precondition[j];
+                    
+                    // Does an opposite effect exist?
+                    var oppositeEffect = JSON.parse(JSON.stringify(precondition));
+                    oppositeEffect.operation = precondition.operation == 'not' ? 'and' : 'not';
+
+                    var mutexAction = effectHash[JSON.stringify(oppositeEffect)];
+                    if (mutexAction && mutexAction != action) {
+                        // Found an opposite (not us). The action at the hash value is a mutex with the current action and vice-versa.
+                        action.mutex = action.mutex || [];
+                        action.mutexHash = action.mutexHash || {};
+                        var obj = { action: mutexAction.action, precondition: mutexAction.precondition, effect: mutexAction.effect };
+                        var objStr = JSON.stringify(obj);
+                        if (!action.mutexHash[objStr]) {
+                            action.mutex.push(obj);
+                            action.mutexHash[objStr] = 1;
+                        }
+
+                        mutexAction.mutex = mutexAction.mutex || [];
+                        mutexAction.mutexHash = mutexAction.mutexHash || {};
+                        obj = { action: action.action, precondition: action.precondition, effect: action.effect };
+                        objStr = JSON.stringify(obj);
+                        if (!mutexAction.mutexHash[objStr]) {
+                            mutexAction.mutex.push(obj);
+                            mutexAction.mutexHash[objStr] = 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        return actions;        
+    },
+
+    markActionsCompetingNeeds: function() {
+        // Calculates mutex relationships amongst actions: the actions have preconditions that are mutex at level i-1.
     }
 };
 
