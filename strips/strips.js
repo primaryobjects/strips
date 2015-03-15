@@ -851,7 +851,8 @@ StripsManager = {
         var children = { effect: [] };
         for (var i in parentLayer) {
             for (var j in parentLayer[i].effect) {
-                var literal = parentLayer[i].effect[j];
+                var literal = JSON.parse(JSON.stringify(parentLayer[i].effect[j]));
+                //var literal = parentLayer[i].effect[j];
                 literal.operation = literal.operation || 'and';
 
                 if (!isSkipNegativeLiterals || (isSkipNegativeLiterals && literal.operation != 'not')) {
@@ -859,7 +860,7 @@ StripsManager = {
                         children.effect.push(literal);
 
                         // P2 - Carry forward literals from parent, using noop actions.
-                        var noop = { action: 'noop' };
+                        var noop = { action: literal.action, type: 'noop' };
                         noop.precondition = noop.precondition || [];
                         noop.precondition.push(literal);
                         noop.effect = noop.precondition;
@@ -914,7 +915,7 @@ StripsManager = {
         // P0 - initial literals.
         for (var i in problem.states[0].actions) {
             // P1 - B. Carry forward literals from parent.
-            var noop = { action: 'noop' };
+            var noop = { action: problem.states[0].actions[i].action, type: 'noop' };
             noop.precondition = noop.precondition || [];
             noop.precondition.push(problem.states[0].actions[i]);
             noop.effect = noop.precondition;
@@ -948,6 +949,9 @@ StripsManager = {
             layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals);
         }
 
+        // Remove done flag.
+        delete result[result.length - 1].done;
+
         return result;
     },
 
@@ -956,6 +960,10 @@ StripsManager = {
         var effectHash = {};
         for (var i in actions) {
             var action = actions[i];
+
+            // Ensure precondition and effect are not copies, but separate memory objects.
+            //action.precondition = JSON.parse(JSON.stringify(action.precondition));
+            action.effect = JSON.parse(JSON.stringify(action.effect));
 
             for (var j in action.effect) {
                 var effect = action.effect[j];
@@ -990,35 +998,37 @@ StripsManager = {
         for (var i in actions) {
             var action = actions[i];
 
-            for (var j in action.effect) {
-                var effect = action.effect[j];
-                
-                // Does an opposite effect exist?
-                var oppositeEffect = JSON.parse(JSON.stringify(effect));
-                oppositeEffect.operation = effect.operation == 'not' ? 'and' : 'not';
+            if (action.type != 'noop') {
+                for (var j in action.effect) {
+                    var effect = action.effect[j];
+                    
+                    // Does an opposite effect exist?
+                    var oppositeEffect = JSON.parse(JSON.stringify(effect));
+                    oppositeEffect.operation = effect.operation == 'not' ? 'and' : 'not';
 
-                var mutexAction = effectHash[JSON.stringify(oppositeEffect)];
-                for (var k in mutexAction) {
-                    var subMutexAction = mutexAction[k];
+                    var mutexAction = effectHash[JSON.stringify(oppositeEffect)];
+                    for (var k in mutexAction) {
+                        var subMutexAction = mutexAction[k];
 
-                    //if (mutexAction && mutexAction.length > 0) {
-                    // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
-                    action.mutex = action.mutex || [];
-                    action.mutexHash = action.mutexHash || {};
-                    var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect };
-                    var objStr = JSON.stringify(obj);
-                    if (!action.mutexHash[objStr]) {
-                        action.mutex.push(obj);
-                        action.mutexHash[objStr] = 1;
-                    }
+                        //if (mutexAction && mutexAction.length > 0) {
+                        // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
+                        action.mutex = action.mutex || [];
+                        action.mutexHash = action.mutexHash || {};
+                        var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect };
+                        var objStr = JSON.stringify(obj);
+                        if (!action.mutexHash[objStr]) {
+                            action.mutex.push(obj);
+                            action.mutexHash[objStr] = 1;
+                        }
 
-                    subMutexAction.mutex = subMutexAction.mutex || [];
-                    subMutexAction.mutexHash = subMutexAction.mutexHash || {};
-                    obj = { action: action.action, precondition: action.precondition, effect: action.effect };
-                    objStr = JSON.stringify(obj);
-                    if (!subMutexAction.mutexHash[objStr]) {
-                        subMutexAction.mutex.push(obj);
-                        subMutexAction.mutexHash[objStr] = 1;
+                        subMutexAction.mutex = subMutexAction.mutex || [];
+                        subMutexAction.mutexHash = subMutexAction.mutexHash || {};
+                        obj = { action: action.action, precondition: action.precondition, effect: action.effect };
+                        objStr = JSON.stringify(obj);
+                        if (!subMutexAction.mutexHash[objStr]) {
+                            subMutexAction.mutex.push(obj);
+                            subMutexAction.mutexHash[objStr] = 1;
+                        }
                     }
                 }
             }
@@ -1034,7 +1044,7 @@ StripsManager = {
         for (var i in actions) {
             var action = actions[i];
 
-            if (action.action != 'noop') {
+            if (action.type != 'noop') {
                 for (var j in action.precondition) {
                     var precondition = action.precondition[j];
                     
@@ -1166,30 +1176,31 @@ StripsManager = {
     markLiteralsInconsistentSupport: function(actions, effectHash) {
         // Calculates mutex relationships amongst literals: all ways of achieving the literals at level i-1 are pairwise mutex.
         for (var i in actions) {
-            var action = actions[i]; // carry
+            var action = actions[i]; // garbage
 
             // Go through each effect and check if its parent action has any mutexes.
             for (var j in action.effect) {
-                var effect = action.effect[j]; // not garbage
+                var effect = action.effect[j]; // garbage
                 var isMutex = true;
 
                 for (var k in action.mutex) {
-                    var mutex = action.mutex[k]; // clean
+                    var mutex = action.mutex[k]; // carry, dolly
 
                     // The effect's parent action is mutex with another action. The effect is mutex with the literals of this mutex action's effects if the only action to achieve those effects is this one.
                     for (var l in mutex.effect) {
-                        var mutexEffect = mutex.effect[l]; // and clean
+                        var mutexEffect = mutex.effect[l]; // not clean
 
                         // Go through each action of this effect (aside from the current one) and check if it's also in mutex with our original action. If not, then no mutex.
                         // First, get the list of actions for this effect.
-                        var me = JSON.parse(JSON.stringify(mutexEffect)); // and clean
+                        var me = JSON.parse(JSON.stringify(mutexEffect)); // not clean
                         delete me.mutex;
                         delete me.mutexHash;
                         var mutexActions = effectHash[JSON.stringify(me)]; // clean
+                        var me2;
 
                         var mutexCount = 0;
                         for (var m in mutexActions) {
-                            var mutexAction = mutexActions[m]; // clean
+                            var mutexAction = mutexActions[m]; // carry
 
                             // Make sure this is not the same action that we're already checking against.
                             //if (mutexAction.action != mutex.action) {
@@ -1197,7 +1208,7 @@ StripsManager = {
                                 for (var n in mutexAction.mutex) {
                                     var testMutexAction = mutexAction.mutex[n]; // carry
 
-                                    var me2 = JSON.parse(JSON.stringify(testMutexAction)); // carry
+                                    me2 = JSON.parse(JSON.stringify(testMutexAction)); // carry
                                     for (var xx in me2.precondition) {
                                         delete me2.precondition[xx].mutex;                            
                                         delete me2.precondition[xx].mutexHash;
@@ -1219,7 +1230,7 @@ StripsManager = {
                                     delete me3.mutex;
                                     delete me3.mutexHash;
 
-                                    if (((action.action == 'noop' && testMutexAction.action == action.precondition[0].action) || (testMutexAction.action == action.action)) && JSON.stringify(testMutexAction.precondition) == JSON.stringify(action.precondition) && JSON.stringify(testMutexAction.effect) == JSON.stringify(action.effect)) {
+                                    if (testMutexAction.action == action.action && JSON.stringify(me2.precondition) == JSON.stringify(me3.precondition) && JSON.stringify(me2.effect) == JSON.stringify(me3.effect)) {
                                         // We're a mutex!
                                         isMutex = true;
                                         mutexCount++;
@@ -1256,14 +1267,15 @@ StripsManager = {
 
                                     var isMutex2 = false;
 
-// lookup original action.
- for (var ii in actions) {
-    var iaction = actions[ii];
-    if (((iaction.action == 'noop' && testMutexAction.action == iaction.precondition[0].action) || (testMutexAction.action == iaction.action)) && JSON.stringify(testMutexAction.precondition) == JSON.stringify(iaction.precondition) && JSON.stringify(testMutexAction.effect) == JSON.stringify(iaction.effect)) {
-        testMutexAction = iaction;
-        break;
-    }
-}
+                                    // lookup original action.
+                                     for (var ii in actions) {
+                                        var iaction = actions[ii];
+
+                                        if (testMutexAction.action == iaction.action && testMutexAction.operation == iaction.operation && JSON.stringify(testMutexAction.parameters) == JSON.stringify(iaction.parameters)) {
+                                            testMutexAction = iaction;
+                                            break;
+                                        }
+                                    }
     //console.log(testMutexAction);
                                     /*var me2 = JSON.parse(JSON.stringify(testMutexAction)); // dolly
                                     for (var xx in me2.precondition) {
