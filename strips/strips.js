@@ -903,11 +903,12 @@ trig: false,
         }
     },
 
-    graph: function(domain, problem, minLayers, maxLayers, isSkipNegativeLiterals) {
+    graph: function(domain, problem, minLayers, maxLayers, isSkipNegativeLiterals, isSkipMutex) {
         // Builds a planning graph for a domain and problem. In each action, 'precondition' represents parent literals. 'effect' represents child literals. Any action not named 'noop' represents an applicable action.
         // Each layer consists of 3-tiers: P0 (literals), A0 (actions), P1 (literals). The format is: P0 = precondition, A0 = actions, P1 = effect.
         // Loops, building new graph layers, until no new literals and no new actions are discovered.
         // If isSkipNegativeLiterals = true, negative literals (mutex) created from an action will be ignored.
+        // If isSkipMutex = true, mutex relationships will not be calculated.
         var result = [];
         var layer = [];
         var actionHash = {};
@@ -952,10 +953,51 @@ trig: false,
         // Remove done flag.
         delete result[result.length - 1].done;
 
+        if (!isSkipMutex) {
+            // Mark mutex relationships in the graph.
+            result = StripsManager.markMutex(result);
+        }
+
         return result;
     },
 
-    markMutex: function(actions) {
+    markMutex: function(graph) {
+        // Mark all mutexes in the graph.
+        var layerIndex = 0;
+        graph[layerIndex] = StripsManager.markMutexLayer(graph[layerIndex]);
+
+        while (++layerIndex < graph.length) {
+            // Carry forward mutexes from literals on P1 to next layer (which starts on P1).
+            for (var i in graph[layerIndex - 1]) { // 7
+                for (var ii in graph[layerIndex - 1][i].effect) {
+                    var literal1 = graph[layerIndex - 1][i].effect[ii];
+
+                    // Find the P1 noop action that matches this index.
+                    for (var j in graph[layerIndex]) { // 12
+                        // Ignore 'done' object.
+                        if (graph[layerIndex][j].precondition) {
+                            if (graph[layerIndex][j].type == 'noop' && graph[layerIndex][j].action == literal1.action && graph[layerIndex][j].precondition[0].operation == literal1.operation && JSON.stringify(graph[layerIndex][j].precondition[0].parameters) == JSON.stringify(literal1.parameters)) {
+                                // Found the matching literal. Now copy the mutexs.
+                                graph[layerIndex][j].precondition = JSON.parse(JSON.stringify(graph[layerIndex][j].precondition));
+                                graph[layerIndex][j].precondition.mutex = literal1.mutex;
+                                graph[layerIndex][j].effect = JSON.parse(JSON.stringify(graph[layerIndex][j].effect));
+                                
+                                // Shouldn't need to do this?
+                                graph[layerIndex][j].mutex = JSON.parse(JSON.stringify(graph[layerIndex][j].precondition.mutex));
+                            }
+                        }
+                    }
+                }
+            }
+
+            graph[layerIndex] = StripsManager.markMutexLayer(graph[layerIndex]);
+        }
+
+        return graph;
+    },
+
+    markMutexLayer: function(actions) {
+        // Mark all mutexes on the given layer.
         // Create a hash entry for each action, for fast lookup.
         var effectHash = {};
         for (var i in actions) {
@@ -974,6 +1016,7 @@ trig: false,
             }
         }
 
+        // Calculate mutex relationships on the layer.
         actions = StripsManager.markActionsInconsistentEffects(actions, effectHash);
         actions = StripsManager.markActionsInterference(actions, effectHash);
         actions = StripsManager.markLiteralsNegation(actions, effectHash);

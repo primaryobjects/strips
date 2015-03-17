@@ -19,34 +19,7 @@ var xmldom = require('xmldom');
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem, 2);
 
-	graph[0] = strips.markMutex(graph[0]);
-
-	// Carry forward mutexes from literals on P1 to next layer (which starts on P1).
-	for (var i in graph[0]) { // 7
-		for (var ii in graph[0][i].effect) {
-			var literal1 = graph[0][i].effect[ii];
-
-			// Find the P1 noop action that matches this index.
-			for (var j in graph[1]) { // 12
-				// Ignore 'done' object.
-				if (graph[1][j].precondition) {
-					if (graph[1][j].type == 'noop' && graph[1][j].action == literal1.action && graph[1][j].precondition[0].operation == literal1.operation && JSON.stringify(graph[1][j].precondition[0].parameters) == JSON.stringify(literal1.parameters)) {
-						// Found the matching literal. Now copy the mutexs.
-						graph[1][j].precondition = JSON.parse(JSON.stringify(graph[1][j].precondition));
-						graph[1][j].precondition.mutex = literal1.mutex;
-						graph[1][j].effect = JSON.parse(JSON.stringify(graph[1][j].effect));
-						
-						// Shouldn't need to do this?
-						graph[1][j].mutex = JSON.parse(JSON.stringify(graph[1][j].precondition.mutex));
-					}
-				}
-			}
-		}
-	}
-
-graph[1] = strips.markMutex(graph[1]);
-// Remove literals from .mutex now and leave just actions in there (since the literals will be duplicated under effect?
-console.log(util.inspect(graph[1][6], true, 5, true));
+	console.log(util.inspect(graph[0][0], true, 5, true));
 
     /*var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
