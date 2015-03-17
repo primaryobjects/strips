@@ -21,7 +21,7 @@ StripsManager = {
     grammarDomainPath: __dirname + '/grammar/grammar-domain.txt',
     // PEG.js grammer for problem.
     grammarProblemPath: __dirname + '/grammar/grammar-problem.txt',
-
+trig: false,
     loadGrammar: function(grammarFileName, codeFileName, callback) {
         // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
@@ -1010,7 +1010,6 @@ StripsManager = {
                     for (var k in mutexAction) {
                         var subMutexAction = mutexAction[k];
 
-                        //if (mutexAction && mutexAction.length > 0) {
                         // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                         action.mutex = action.mutex || [];
                         action.mutexHash = action.mutexHash || {};
@@ -1056,7 +1055,6 @@ StripsManager = {
                     for (var k in mutexAction) {
                         var subMutexAction = mutexAction[k];
                         if (subMutexAction != action) {
-                            //if (mutexAction && mutexAction != action) {
                             // Found an opposite (not us). The action at the hash value is a mutex with the current action and vice-versa.
                             action.mutex = action.mutex || [];
                             action.mutexHash = action.mutexHash || {};
@@ -1103,7 +1101,6 @@ StripsManager = {
                 var mutexAction = effectHash[JSON.stringify(oppositeEffect)];
                 for (var k in mutexAction) {
                     var subMutexAction = mutexAction[k];
-                //if (mutexAction) {
                     // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                     effect.mutex = effect.mutex || [];
                     effect.mutexHash = effect.mutexHash || {};
@@ -1113,59 +1110,6 @@ StripsManager = {
                         effect.mutex.push(obj);
                         effect.mutexHash[objStr] = 1;
                     }
-
-                    // Inconsistent support. Mark all other effects from mutexAction as mutex with the current effect, if there are no other ways to make this mutex effect.
-                    /*for (var k in subMutexAction.effect) {
-                        var mutexEffect = subMutexAction.effect[k];
-
-                        if (mutexEffect.action != oppositeEffect.action) {
-                            // Do other actions make mutexEffect? If so, does that action have oppositeEffect too? If it doesn't, then it's not mutex.
-                            // mutexEffect.action is a potential target mutex. Does it have other actions besides subMutexAction?
-                            var isMutex = true;
-                            var subSubMutexAction = effectHash[JSON.stringify(mutexEffect)];
-                            if (subSubMutexAction && subSubMutexAction.length > 1) {
-                                // This effect has other actions.
-                                for (var l in subSubMutexAction) {
-                                    // Make sure this is not the same action that we're already checking against.
-                                    if (subSubMutexAction[l].action != subMutexAction.action) {
-                                        // Does this other action also have oppositeEffect?
-                                        for (var m in subSubMutexAction[l].effect) {
-                                            if (JSON.stringify(oppositeEffect) == JSON.stringify(subSubMutexAction[l].effect[m])) {
-                                                // This also has the opposite effect.
-                                            }
-                                            else {
-                                                isMutex = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if (isMutex) {
-                                obj = { action: mutexEffect.action, operation: mutexEffect.operation, parameters: mutexEffect.parameters };
-                                objStr = JSON.stringify(obj);
-                                if (!effect.mutexHash[objStr]) {
-                                    effect.mutex.push(obj);
-                                    effect.mutexHash[objStr] = 1;
-                                }
-                            }
-
-                            /*mutexEffect.mutex = mutexEffect.mutex || [];
-                            mutexEffect.mutexHash = mutexEffect.mutexHash || {};
-                            obj = { action: effect.action, operation: effect.operation, parameters: effect.parameters };
-                            objStr = JSON.stringify(obj);
-                            if (!mutexEffect.mutexHash[objStr]) {
-                                mutexEffect.mutex.push(obj);
-                                mutexEffect.mutexHash[objStr] = 1;
-                            }*/
-                        /*}
-                    }*/
-
-                    // Inconsistent support on the mutex parent actions' effect literals.
-                    // If this literal's action is mutex with other actions, then look at each of those other literals.
-                    // Does the literal have any other actions? If not, the literal is mutex.
-                    // If it does have other actions, are those actions also mutex with the parent action or parent-parent action?
                 }
             }
         }
@@ -1173,212 +1117,97 @@ StripsManager = {
         return actions;
     },
 
-    markLiteralsInconsistentSupport: function(actions, effectHash) {
-        // Calculates mutex relationships amongst literals: all ways of achieving the literals at level i-1 are pairwise mutex.
-        for (var i in actions) {
-            var action = actions[i]; // garbage
+    isActionMutex: function(action1, action2) {
+        // Check if action2 exists within action1.mutex.
+        for (var i in action1.mutex) {
+            var action = action1.mutex[i];
 
-            // Go through each effect and check if its parent action has any mutexes.
+            // Clean up before equality test.
+            action = JSON.parse(JSON.stringify(action));
+            for (var j in action.precondition) {
+                delete action.precondition[j].mutex;                            
+                delete action.precondition[j].mutexHash;
+            }
             for (var j in action.effect) {
-                var effect = action.effect[j]; // garbage
-                var isMutex = true;
+                delete action.effect[j].mutex;                            
+                delete action.effect[j].mutexHash;
+            }
 
-                for (var k in action.mutex) {
-                    var mutex = action.mutex[k]; // carry, dolly
+            action2 = JSON.parse(JSON.stringify(action2));
+            for (var j in action2.precondition) {
+                delete action2.precondition[j].mutex;                            
+                delete action2.precondition[j].mutexHash;
+            }
+            for (var j in action2.effect) {
+                delete action2.effect[j].mutex;                            
+                delete action2.effect[j].mutexHash;
+            }
+            delete action2.mutex;
+            delete action2.mutexHash;
 
-                    // The effect's parent action is mutex with another action. The effect is mutex with the literals of this mutex action's effects if the only action to achieve those effects is this one.
-                    for (var l in mutex.effect) {
-                        var mutexEffect = mutex.effect[l]; // not clean
+            if ((action.action == action2.action && JSON.stringify(action.precondition) == JSON.stringify(action2.precondition) && JSON.stringify(action.effect) == JSON.stringify(action2.effect)) ||
+                (action.action == action2.action && action.operation == action2.operation && JSON.stringify(action.parameters) == JSON.stringify(action2.parameters)) ||
+                (action2.type == 'noop' && action.action == action2.action && action.operation == action2.precondition[0].operation && JSON.stringify(action.parameters) == JSON.stringify(action2.precondition[0].parameters))) {
+                return true;
+            }
+        }
 
-                        // Go through each action of this effect (aside from the current one) and check if it's also in mutex with our original action. If not, then no mutex.
-                        // First, get the list of actions for this effect.
-                        var me = JSON.parse(JSON.stringify(mutexEffect)); // not clean
-                        delete me.mutex;
-                        delete me.mutexHash;
-                        var mutexActions = effectHash[JSON.stringify(me)]; // clean
-                        var me2;
+        return false;
+    },
 
-                        var mutexCount = 0;
-                        for (var m in mutexActions) {
-                            var mutexAction = mutexActions[m]; // carry
+    markLiteralsInconsistentSupport: function(actions, effectHash) {
+        // Take 2 literals (A, B). Find their parent actions. If each action in A is mutex with every single action in B, then the literals are mutex too.
+        for (var i in actions) {
+            var action = actions[i];
 
-                            // Make sure this is not the same action that we're already checking against.
-                            //if (mutexAction.action != mutex.action) {
-                                // Is mutexAction mutex with action?
-                                for (var n in mutexAction.mutex) {
-                                    var testMutexAction = mutexAction.mutex[n]; // carry
+            // Step 1: Get the first literal.
+            for (var j in action.effect) {
+                var literal1 = action.effect[j];
 
-                                    me2 = JSON.parse(JSON.stringify(testMutexAction)); // carry
-                                    for (var xx in me2.precondition) {
-                                        delete me2.precondition[xx].mutex;                            
-                                        delete me2.precondition[xx].mutexHash;
-                                    }
-                                    for (var xx in me2.effect) {
-                                        delete me2.effect[xx].mutex;                            
-                                        delete me2.effect[xx].mutexHash;
-                                    }
+                for (var i2 in actions) {
+                    if (i2 == i) continue;
+                    var action2 = actions[i2];
 
-                                    var me3 = JSON.parse(JSON.stringify(action)); // carry
-                                    for (var xx in me3.precondition) {
-                                        delete me3.precondition[xx].mutex;                            
-                                        delete me3.precondition[xx].mutexHash;
-                                    }
-                                    for (var xx in me3.effect) {
-                                        delete me3.effect[xx].mutex;                            
-                                        delete me3.effect[xx].mutexHash;
-                                    }
-                                    delete me3.mutex;
-                                    delete me3.mutexHash;
+                    // Step 2: Get the second literal.
+                    for (var j2 in action2.effect) {
+                        var literal2 = action2.effect[j2];
 
-                                    if (testMutexAction.action == action.action && JSON.stringify(me2.precondition) == JSON.stringify(me3.precondition) && JSON.stringify(me2.effect) == JSON.stringify(me3.effect)) {
-                                        // We're a mutex!
-                                        isMutex = true;
-                                        mutexCount++;
-                                        break;
-                                    }
-                                    else {
-                                        // Not a mutex. This means the target literal can be achieved with a different action, not in mutex.
-                                        isMutex = false;
-                                    }
-                                }
-                            //}
-                        }
+                        // Step 3: Find the parent actions.
+                        var literal1b = JSON.parse(JSON.stringify(literal1));
+                        delete literal1b.mutex;
+                        delete literal1b.mutexHash;                        
+                        var parentActions1 = effectHash[JSON.stringify(literal1b)];
+                        var literal2b = JSON.parse(JSON.stringify(literal2));
+                        delete literal2b.mutex;
+                        delete literal2b.mutexHash;                        
+                        var parentActions2 = effectHash[JSON.stringify(literal2b)];
 
-                        if (mutexCount != mutexActions.length) {
-                            isMutex = false;
-                        }
+                        // Step 4: Check if each action in A is mutex with every single action in B.
+                        var isMutex = true;
+                        
+                        for (var k in parentActions1) {
+                            var parentAction1 = parentActions1[k];
 
-                        if (isMutex) {
-                            // Next, check if the source literal has other actions and if they are also in mutex.
-                            var me = JSON.parse(JSON.stringify(effect));
-                            delete me.mutex;
-                            delete me.mutexHash;
-                            mutexActions = effectHash[JSON.stringify(me)];
+                            for (var l in parentActions2) {
+                                var parentAction2 = parentActions2[l];
 
-                        var mutexCount = 0;
-                        for (var m in mutexActions) {
-                            var mutexAction = mutexActions[m]; // carry, dolly
-
-                            // Make sure this is not the same action that we're already checking against.
-                            //if (mutexAction.action != mutex.action) {
-                                // Is mutexAction mutex with action?
-                                for (var n in mutexAction.mutex) {
-                                    var testMutexAction = mutexAction.mutex[n]; // all mutexes of this other action, if any are mutex with effect, then mutex holds.
-
-                                    var isMutex2 = false;
-
-                                    // lookup original action.
-                                     for (var ii in actions) {
-                                        var iaction = actions[ii];
-
-                                        if (testMutexAction.action == iaction.action && testMutexAction.operation == iaction.operation && JSON.stringify(testMutexAction.parameters) == JSON.stringify(iaction.parameters)) {
-                                            testMutexAction = iaction;
-                                            break;
-                                        }
-                                    }
-    //console.log(testMutexAction);
-                                    /*var me2 = JSON.parse(JSON.stringify(testMutexAction)); // dolly
-                                    for (var xx in me2.precondition) {
-                                        delete me2.precondition[xx].mutex;                            
-                                        delete me2.precondition[xx].mutexHash;
-                                    }
-                                    for (var xx in me2.effect) {
-                                        delete me2.effect[xx].mutex;                            
-                                        delete me2.effect[xx].mutexHash;
-                                    }*/
-
-                                    /*var me3 = JSON.parse(JSON.stringify(action)); // carry
-                                    for (var xx in me3.precondition) {
-                                        delete me3.precondition[xx].mutex;                            
-                                        delete me3.precondition[xx].mutexHash;
-                                    }
-                                    for (var xx in me3.effect) {
-                                        delete me3.effect[xx].mutex;                            
-                                        delete me3.effect[xx].mutexHash;
-                                    }
-                                    delete me3.mutex;
-                                    delete me3.mutexHash;*/
-
-                                    // me2 is a parent action of effect, possibly a different one than action.
-                                    // This means that effect can be achieved by me2.
-                                    // Check if me2 has a mutex that has an effect of mutexEffect. If not, no mutex.
-                                    /*for (var o in testMutexAction.mutex) {
-                                        var amutex = testMutexAction.mutex[o];
-*/
-                                        for (var p in testMutexAction.effect) {
-                                            var aeffect = testMutexAction.effect[p];
-
-                                            if (aeffect.action == mutexEffect.action && aeffect.operation == mutexEffect.operation && JSON.stringify(aeffect.parameters) == JSON.stringify(mutexEffect.parameters)) {
-                                                // This action is still mutex with our effect.
-                                                isMutex2 = true;
-                                                break;
-                                            }
-                                        }
-                                   // }
-
-                                   if (isMutex2) {
-                                    mutexCount++;
-                                   }
-                                    /*if (((testMutexAction.action == 'noop' && testMutexAction.action == action.precondition[0].action) || (testMutexAction.action == action.action)) && JSON.stringify(testMutexAction.precondition) == JSON.stringify(action.precondition) && JSON.stringify(testMutexAction.effect) == JSON.stringify(action.effect)) {
-                                        // We're a mutex!
-                                        isMutex2 = true;
-                                        //mutexCount++;
-                                        break;
-                                    }
-                                    else {
-                                        // Not a mutex. This means the target literal can be achieved with a different action, not in mutex.
-                                       // isMutex = false;
-                                    }*/
-                                }
-                            //}
-                        }
-
-                        /*if (mutexCount != mutexActions.length) {
-                            isMutex = false;
-                        }*/
-                        if (mutexCount < mutexActions.length) {
-                            isMutex = false;
-                        }
-
-
-
-                        }
-
-                        /*if (isMutex) {
-                            // Next, check if the source literal has other actions and if they are also in mutex.
-                            mutexActions = effectHash[JSON.stringify(effect)];
-                            for (var m in mutexActions) {
-                                var mutexAction = mutexActions[m];
-
-                                // Make sure this is not the same action that we're already checking against.
-                                if (mutexAction.action != action.action) {
-                                    // Is mutexAction mutex with action?
-                                    for (var n in mutexAction.mutex) {
-                                        var testMutexAction = mutexAction.mutex[n];
-
-                                        if (testMutexAction.action == mutex.action && testMutexAction.operation == mutex.operation && JSON.stringify(testMutexAction.parameters) == JSON.stringify(mutex.parameters)) {
-                                            // We're a mutex!
-                                        }
-                                        else {
-                                            // Not a mutex. This means the target literal can be achieved with a different action, not in mutex.
-                                            isMutex = false;
-                                        }
-                                    }
+                                // Test mutex. Must be true for all of parentActions2.
+                                if (!StripsManager.isActionMutex(parentAction1, parentAction2)) {
+                                    isMutex = false;
                                 }
                             }
-                        }*/
+                        }
 
                         if (isMutex) {
-                            //console.log('Discovered mutex effect ' + mutexEffect.action);
+                            // literal1 is mutex with literal2.
+                            literal1.mutex = literal1.mutex || [];
+                            literal1.mutexHash = literal1.mutexHash || {};
 
-                            effect.mutex = effect.mutex || [];
-                            effect.mutexHash = effect.mutexHash || {};
-
-                            obj = { action: mutexEffect.action, operation: mutexEffect.operation, parameters: mutexEffect.parameters };
-                            objStr = JSON.stringify(obj);
-                            if (!effect.mutexHash[objStr]) {
-                                effect.mutex.push(obj);
-                                effect.mutexHash[objStr] = 1;
+                            var mutex = { action: literal2.action, operation: literal2.operation, parameters: literal2.parameters };
+                            var mutexStr = JSON.stringify(mutex);
+                            if (!literal1.mutexHash[mutexStr]) {
+                                literal1.mutex.push(mutex);
+                                literal1.mutexHash[mutexStr] = 1;
                             }
                         }
                     }
