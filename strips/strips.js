@@ -21,7 +21,7 @@ StripsManager = {
     grammarDomainPath: __dirname + '/grammar/grammar-domain.txt',
     // PEG.js grammer for problem.
     grammarProblemPath: __dirname + '/grammar/grammar-problem.txt',
-trig: false,
+
     loadGrammar: function(grammarFileName, codeFileName, callback) {
         // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
@@ -836,6 +836,140 @@ trig: false,
         }
 
         return solutions;
+    },
+
+    solveGraph:function(domain, problem) {
+        var graph = [];
+        var layer = [];
+        var goalLiterals = {};
+        var isGoalPresent = false;
+
+        // Load goal states that we need to find.
+        for (var i in problem.states[1].actions) {
+            var action = problem.states[1].actions[i];
+            action.operation = action.operation || 'and';
+
+            goalLiterals[JSON.stringify(action)] = 0;
+        }
+
+        // Step 1: Check if all goal literals appear in the last layer's effects.
+        while (!isGoalPresent) {
+            if (graph.length == 0) {
+                // Get first graph layer.
+                graph = StripsManager.graph(domain, problem, 0, 1);
+            }
+            else {
+                // Get next graph layer.
+                var layer2 = StripsManager.nextGraphLayer(domain, graph[graph.length - 1]);
+
+                // Remove done flag.
+                delete layer2.done;
+
+                graph.push(layer2);
+
+                // Mark mutex relationships in the graph.
+                graph = StripsManager.markMutex(graph);
+            }
+
+            // Check last graph layer.
+            layer = graph[graph.length - 1];
+            for (var i in layer) {
+                var action = layer[i];
+
+                // Get literals in layer.
+                for (var j in action.effect) {
+                    var literal1 = action.effect[j];
+
+                    // Compare literals in layer to those in goal state.
+                    for (var k in problem.states[1].actions) {
+                        var literal2 = problem.states[1].actions[k];
+                        literal2.operation = literal2.operation || 'and';
+
+                        if (literal1.action == literal2.action && literal1.operation == literal2.operation) {
+                            // Found a goal literal.
+                            var obj = JSON.parse(JSON.stringify(literal1));
+                            delete obj.mutex;
+
+                            goalLiterals[JSON.stringify(obj)] = goalLiterals[JSON.stringify(obj)] || [];
+                            goalLiterals[JSON.stringify(obj)].push(action);
+                        }
+                    }
+                }
+            }
+
+            isGoalPresent = true;
+
+            // Check if all goal states are available.
+            for (var goal in goalLiterals) {
+                if (!goalLiterals[goal]) {
+                    isGoalPresent = false;
+                }
+            }
+
+            if (isGoalPresent) {
+                // Check if all goal states are not mutex.
+                for (var goal1 in goalLiterals) {
+                    var literal1 = JSON.parse(goal1);
+
+                    // Check if the goal literal is mutex with any of the other goal literals.
+                    for (var goal2 in goalLiterals) {
+                        var literal2 = JSON.parse(goal2);
+
+                        if (goal1 != goal2) {
+                            if (StripsManager.isActionMutex(literal1, literal2)) {
+                                isGoalPresent = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!isGoalPresent) break;
+                }
+            }
+        }
+
+        if (isGoalPresent) {
+            // Try to find a solution with GraphSearch.
+            console.log('OK - ' + graph.length);
+
+            var values = [];
+
+            // For each goal literal, find a parent action that is not mutex with any other goal literal parent action.
+            for (var effect in goalLiterals) {
+                var actions = goalLiterals[effect]; // parent actions of this effect
+
+                // Setup values to get a combination of all possible parent actions from each literal.
+                for (var i in actions) {
+                    var action = actions[i];
+
+                    // Parent action for this effect.
+                    values.push({ action: action, literal: effect });
+                }
+            }
+
+            // Get a combination of all possible parent actions from all other actions from other effects).
+            var cmb = combinatorics.combination(values, problem.states[1].actions.length).filter(function (combo) {
+                // Combination will pick 3 actions from the list. We need to filter out valid combinations to include those where each literal is represented.
+                var literalHash = {};
+
+                for (var i in combo) {
+                    literalHash[JSON.stringify(combo[i].literal)] = combo[i];
+                }
+
+                // If we have the same number of unique literals in our hash as in goalLiterals, then this is a valid combination of actions.
+                return (Object.keys(literalHash).length == Object.keys(goalLiterals).length);
+            });
+
+            // We now have valid combinations of actions to try. Let's find one without mutexes with other actions.
+            for (var i in cmb) {
+                var combo = cmb[i];
+                for (var j in combo) {
+                    /*console.log(combo[j].literal);
+                    console.log(combo[j].action.precondition[0].operation + ' ' + combo[j].action.action);
+                    console.log('');*/
+                }
+            }
+        }
     },
 
     nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals) {
