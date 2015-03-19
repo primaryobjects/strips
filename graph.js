@@ -17,7 +17,7 @@ var xmldom = require('xmldom');
 
 // Load the domain and problem.
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
-    //var graph = strips.graph(domain, problem, 2);
+    //var graph = strips.graph(domain, problem, 3);
 
 //	console.log(util.inspect(graph[1][1], true, 5, true));
 	strips.solveGraph(domain, problem);
