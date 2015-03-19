@@ -963,15 +963,15 @@ StripsManager = {
                 // We now have valid combinations of actions to try. Let's find one without mutexes with other actions.
                 for (var i in cmb) {
                     // Get a combination of actions case.
-                    var combo = cmb[i];
+                    var actions = cmb[i];
                     var isValid = true;
 
                     // Check each action in this combination and make sure none are mutex with each other.
-                    for (var j in combo) {
-                        var action1 = combo[j].action;
+                    for (var j in actions) {
+                        var action1 = actions[j].action;
 
-                        for (var k in combo) {
-                            var action2 = combo[k].action;
+                        for (var k in actions) {
+                            var action2 = actions[k].action;
 
                             if (action1 != action2) {
                                 if (StripsManager.isActionMutex(action1, action2)) {
@@ -988,9 +988,85 @@ StripsManager = {
                     if (isValid) {
                         count1++;
 
-                        //
-                        // Go deeper and check for mutexes.
-                        //
+                        // Each action in actions is valid. Next, get the parent literals (preconditions) for these actions and verify not mutex.
+                        for (var j in actions) {
+                            var action1 = actions[j].action;
+
+                            for (var k in action1.precondition) {
+                                // Not sure why we need this, but it's currently needed or undefined error.
+                                if (k == 'mutex') continue;
+
+                                var precondition1 = action1.precondition[k];
+                                var preconditionAction1 = null;
+
+                                // Lookup action that matches precondition, so we have the mutexes.
+                                for (var ii in layer) {
+                                    var testAction = layer[ii];
+
+                                    if ((testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition1.parameters)) ||
+                                        (testAction.type == 'noop' && testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition1.parameters))) {
+                                        preconditionAction1 = testAction;
+                                        break;
+                                    }
+                                }
+
+                                if (!preconditionAction1) {
+                                    console.log('ERROR - Action not found for precondition 1:');
+                                    console.log(precondition1);
+                                    break;
+                                }
+
+                                for (var l in actions) {
+                                    var action2 = actions[l].action;
+
+                                    if (action1 != action2) {
+                                        for (var m in action2.precondition) {
+                                            // Not sure why we need this, but it's currently needed or undefined error.
+                                            if (m == 'mutex') continue;
+
+                                            var precondition2 = action2.precondition[m];
+                                            var preconditionAction2 = null;
+
+                                            // Lookup action that matches precondition, so we have the mutexes.
+                                            for (var ii in layer) {
+                                                var testAction = layer[ii];
+                                                testAction.operation = testAction.operation || 'and';
+                                                precondition2.operation = precondition2.operation || 'and';
+
+                                                if ((testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition2.parameters)) ||
+                                                    (testAction.type == 'noop' && testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition2.parameters))) {
+                                                    preconditionAction2 = testAction;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (!preconditionAction2) {
+                                                console.log('ERROR - Action not found for precondition 2:');
+                                                console.log(precondition2);
+                                                break;
+                                            }
+
+                                            // Check for mutex between precondition1's and precondition2's literals.
+                                            if (StripsManager.isActionMutex(preconditionAction1, preconditionAction2)) {
+                                                // Literals are mutex, we fail.
+                                                isValid = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if (!isValid) break;
+                                }
+
+                                if (!isValid) break;
+                            }
+
+                            if (!isValid) break;
+                        }
+
+                        if (isValid) {
+                            // Literals are not mutex. Now get parent actions.
+                        }
                     }
                     else {
                         count2++;
