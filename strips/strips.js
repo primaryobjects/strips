@@ -929,155 +929,242 @@ StripsManager = {
                     console.log('Found goal literals at layer ' + graph.length);
                 //}
 
-                var values = [];
+                StripsManager.solveGraphInner(graph, graph.length - 1, goalLiterals);
+            }
+        }
+    },
 
-                // For each goal literal, find a parent action that is not mutex with any other goal literal parent action.
-                for (var effect in goalLiterals) {
-                    var actions = goalLiterals[effect]; // parent actions of this effect
+    solveGraphInner: function(graph, layerIndex, goalLiterals, solution) {
+        var values = [];
+        var layer = graph[layerIndex];
 
-                    // Setup values to get a combination of all possible parent actions from each literal.
-                    for (var i in actions) {
-                        var action = actions[i];
+        // For each goal literal, find a parent action that is not mutex with any other goal literal parent action.
+        for (var effect in goalLiterals) {
+            var actions = goalLiterals[effect]; // parent actions of this effect
 
-                        // Parent action for this effect.
-                        values.push({ action: action, literal: effect });
+            // Setup values to get a combination of all possible parent actions from each literal.
+            for (var i in actions) {
+                var action = actions[i];
+
+                // Parent action for this effect.
+                values.push({ action: action, literal: effect });
+            }
+        }
+
+        // Get a combination of all possible parent actions from all other actions from other effects).
+        var cmb = combinatorics.combination(values, Object.keys(goalLiterals).length).filter(function (combo) {
+            // Combination will pick 3 actions from the list. We need to filter out valid combinations to include those where each literal is represented.
+            var literalHash = {};
+
+            for (var i in combo) {
+                literalHash[JSON.stringify(combo[i].literal)] = combo[i];
+            }
+
+            // If we have the same number of unique literals in our hash as in goalLiterals, then this is a valid combination of actions.
+            return (Object.keys(literalHash).length == Object.keys(goalLiterals).length);
+        });
+
+        var count1 = 0;
+        var count2 = 0;
+
+        // We now have valid combinations of actions to try. Let's find one without mutexes with other actions.
+        for (var i in cmb) {
+            // Get a combination of actions case.
+            var actions = cmb[i];
+            var isValid = true;
+
+            // Check each action in this combination and make sure none are mutex with each other.
+            for (var j in actions) {
+                var action1 = actions[j].action;
+
+                for (var k in actions) {
+                    var action2 = actions[k].action;
+
+                    if (action1 != action2) {
+                        if (StripsManager.isActionMutex(action1, action2)) {
+                            // Found a mutex, so this case fails.
+                            isValid = false;
+                            break;
+                        }
                     }
                 }
 
-                // Get a combination of all possible parent actions from all other actions from other effects).
-                var cmb = combinatorics.combination(values, problem.states[1].actions.length).filter(function (combo) {
-                    // Combination will pick 3 actions from the list. We need to filter out valid combinations to include those where each literal is represented.
-                    var literalHash = {};
+                if (!isValid) break;
+            }
 
-                    for (var i in combo) {
-                        literalHash[JSON.stringify(combo[i].literal)] = combo[i];
-                    }
+            if (isValid) {
+                count1++;
 
-                    // If we have the same number of unique literals in our hash as in goalLiterals, then this is a valid combination of actions.
-                    return (Object.keys(literalHash).length == Object.keys(goalLiterals).length);
-                });
+                // Each action in actions is valid. Next, get the parent literals (preconditions) for these actions and verify not mutex.
+                for (var j in actions) {
+                    var action1 = actions[j].action;
+//console.log('Action: ');
+//console.log(action1);
+                    for (var k in action1.precondition) {
+                        // Not sure why we need this, but it's currently needed or undefined error.
+                        if (k == 'mutex') continue;
 
-                var count1 = 0;
-                var count2 = 0;
+                        var precondition1 = action1.precondition[k];
+                        var preconditionAction1 = null;
 
-                // We now have valid combinations of actions to try. Let's find one without mutexes with other actions.
-                for (var i in cmb) {
-                    // Get a combination of actions case.
-                    var actions = cmb[i];
-                    var isValid = true;
+                        // Lookup action that matches precondition, so we have the mutexes.
+                        for (var ii in layer) {
+                            var testAction = layer[ii];
 
-                    // Check each action in this combination and make sure none are mutex with each other.
-                    for (var j in actions) {
-                        var action1 = actions[j].action;
-
-                        for (var k in actions) {
-                            var action2 = actions[k].action;
-
-                            if (action1 != action2) {
-                                if (StripsManager.isActionMutex(action1, action2)) {
-                                    // Found a mutex, so this case fails.
-                                    isValid = false;
-                                    break;
-                                }
+                            if ((testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition1.parameters)) ||
+                                (testAction.type == 'noop' && testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition1.parameters))) {
+                                preconditionAction1 = testAction;
+                                break;
                             }
                         }
 
-                        if (!isValid) break;
-                    }
+                        if (!preconditionAction1) {
+                            // Action not in this graph layer, must be an effect.
+                            console.log('ERROR - Action not found for precondition 1:' + layerIndex);
+                        /*    console.log('precondition1');
+                            console.log(precondition1);
+                        for (var ii in layer) {
+                            var testAction = layer[ii];
+                            console.log('testAction');
+                            console.log(testAction);
+                        }                            exit;*/
+                            break;
+                        }
+//console.log('----------------------');
+                        for (var l in actions) {
+                            var action2 = actions[l].action;
 
-                    if (isValid) {
-                        count1++;
+                            if (action1 != action2) {
+                                for (var m in action2.precondition) {
+                                    // Not sure why we need this, but it's currently needed or undefined error.
+                                    if (m == 'mutex') continue;
 
-                        // Each action in actions is valid. Next, get the parent literals (preconditions) for these actions and verify not mutex.
-                        for (var j in actions) {
-                            var action1 = actions[j].action;
+                                    var precondition2 = action2.precondition[m];
+                                    var preconditionAction2 = null;
 
-                            for (var k in action1.precondition) {
-                                // Not sure why we need this, but it's currently needed or undefined error.
-                                if (k == 'mutex') continue;
+                                    // Lookup action that matches precondition, so we have the mutexes.
+                                    for (var ii in layer) {
+                                        var testAction = layer[ii];
+                                        testAction.operation = testAction.operation || 'and';
+                                        precondition2.operation = precondition2.operation || 'and';
 
-                                var precondition1 = action1.precondition[k];
-                                var preconditionAction1 = null;
-
-                                // Lookup action that matches precondition, so we have the mutexes.
-                                for (var ii in layer) {
-                                    var testAction = layer[ii];
-
-                                    if ((testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition1.parameters)) ||
-                                        (testAction.type == 'noop' && testAction.action == precondition1.action && testAction.precondition[0].operation == precondition1.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition1.parameters))) {
-                                        preconditionAction1 = testAction;
-                                        break;
-                                    }
-                                }
-
-                                if (!preconditionAction1) {
-                                    console.log('ERROR - Action not found for precondition 1:');
-                                    console.log(precondition1);
-                                    break;
-                                }
-
-                                for (var l in actions) {
-                                    var action2 = actions[l].action;
-
-                                    if (action1 != action2) {
-                                        for (var m in action2.precondition) {
-                                            // Not sure why we need this, but it's currently needed or undefined error.
-                                            if (m == 'mutex') continue;
-
-                                            var precondition2 = action2.precondition[m];
-                                            var preconditionAction2 = null;
-
-                                            // Lookup action that matches precondition, so we have the mutexes.
-                                            for (var ii in layer) {
-                                                var testAction = layer[ii];
-                                                testAction.operation = testAction.operation || 'and';
-                                                precondition2.operation = precondition2.operation || 'and';
-
-                                                if ((testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition2.parameters)) ||
-                                                    (testAction.type == 'noop' && testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition2.parameters))) {
-                                                    preconditionAction2 = testAction;
-                                                    break;
-                                                }
-                                            }
-
-                                            if (!preconditionAction2) {
-                                                console.log('ERROR - Action not found for precondition 2:');
-                                                console.log(precondition2);
-                                                break;
-                                            }
-
-                                            // Check for mutex between precondition1's and precondition2's literals.
-                                            if (StripsManager.isActionMutex(preconditionAction1, preconditionAction2)) {
-                                                // Literals are mutex, we fail.
-                                                isValid = false;
-                                                break;
-                                            }
+                                        if ((testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.parameters) == JSON.stringify(precondition2.parameters)) ||
+                                            (testAction.type == 'noop' && testAction.action == precondition2.action && testAction.precondition[0].operation == precondition2.operation && JSON.stringify(testAction.precondition[0].parameters) == JSON.stringify(precondition2.parameters))) {
+                                            preconditionAction2 = testAction;
+                                            break;
                                         }
                                     }
 
-                                    if (!isValid) break;
-                                }
+                                    if (!preconditionAction2) {
+                                        console.log('ERROR - Action not found for precondition 2:');
+                                        console.log(precondition2);
+                                        break;
+                                    }
 
-                                if (!isValid) break;
+                                    // Check for mutex between precondition1's and precondition2's literals.
+                                    if (StripsManager.isActionMutex(preconditionAction1, preconditionAction2)) {
+                                        // Literals are mutex, we fail.
+                                        isValid = false;
+                                        break;
+                                    }
+                                }
                             }
 
                             if (!isValid) break;
                         }
 
-                        if (isValid) {
-                            // Literals are not mutex. Now get parent actions.
-                        }
+                        if (!isValid) break;
                     }
-                    else {
-                        count2++;
-                    }
+
+                    if (!isValid) break;
                 }
 
-                //if (StripsManager.verbose) {
-                    console.log(count1 + ' safe actions, ' + count2 + ' mutex actions');
-                //}
+                if (isValid) {
+                    // Literals are not mutex. Now get parent actions.
+                    // Set new goal states that we need to find (literals).
+        //console.log('goalLiterals1:');
+//console.log(goalLiterals);
+
+                    goalLiterals = {};
+                    var goalActions = [];
+
+                    for (var i in actions) {
+                        var action = actions[i].action;
+
+                        if (action.type != 'noop') {
+                            solution = solution || [];
+                            solution.unshift(action.action);
+                        }
+
+                        for (var j in action.precondition) {
+                            var precondition = action.precondition[j];
+                            if (precondition) {
+                                // This is a goal literal.
+                                goalActions.push(precondition);
+
+                                var key = JSON.stringify({ operation: precondition.operation, action: precondition.action, parameters: precondition.parameters });
+                                if (key.length > 5 && precondition.action)
+                                    goalLiterals[key] = 0;
+                            }
+                        }
+                        /*action.operation = action.precondition[0].operation;
+                        action.parameters = action.precondition[0].parameters;
+
+                        goalActions.push(action);
+                        goalLiterals[JSON.stringify({ operation: action.operation, action: action.action, parameters: action.parameters })] = 0;*/
+                    }
+        //console.log('goalLiterals1b:');
+//console.log(goalLiterals);
+
+                    if (layerIndex - 1 >= 0) {
+                        var layerp = graph[layerIndex - 1];
+
+                        // Find new goal actions.
+                        for (var i in layerp) {
+                            var action = layerp[i];
+
+                            // Get literals in layer.
+                            for (var j in action.effect) {
+                                var literal1 = action.effect[j];
+
+                                // Compare literals in layer to those in goal state.
+                                for (var k in goalActions) {
+                                    var literal2 = goalActions[k];
+                                    literal2.operation = literal2.operation || 'and';
+
+                                    if (literal1.action == literal2.action && literal1.operation == literal2.operation) {
+                                        // Found a goal literal.
+                                        var obj = JSON.parse(JSON.stringify(literal1));
+                                        delete obj.mutex;
+
+                                        goalLiterals[JSON.stringify(obj)] = goalLiterals[JSON.stringify(obj)] || [];
+                                        goalLiterals[JSON.stringify(obj)].push(action);                                    
+                                    }
+                                }
+                            }
+                        }
+        //console.log('goalLiterals2:');
+//console.log(goalLiterals);
+
+                        // Move to next layer up.
+                        StripsManager.solveGraphInner(graph, layerIndex - 1, goalLiterals, solution);
+                    }
+                    else {
+                        console.log('SOLUTION FOUND!');
+                        for (var i in solution) {
+                            console.log(solution[i]);
+                        }
+                    }
+                }
+            }
+            else {
+                count2++;
             }
         }
+
+        //if (StripsManager.verbose) {
+            //console.log(count1 + ' safe actions, ' + count2 + ' mutex actions');
+        //}
     },
 
     nextGraphLayer: function(domain, parentLayer, isSkipNegativeLiterals) {
