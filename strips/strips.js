@@ -880,7 +880,7 @@ StripsManager = {
                             var literal2 = problem.states[1].actions[k];
                             literal2.operation = literal2.operation || 'and';
 
-                            if (literal1.action == literal2.action && literal1.operation == literal2.operation) {
+                            if (literal1.action == literal2.action && literal1.operation == literal2.operation && JSON.stringify(literal1.parameters) == JSON.stringify(literal2.parameters)) {
                                 // Found a goal literal.
                                 var obj = JSON.parse(JSON.stringify(literal1));
                                 delete obj.mutex;
@@ -1093,7 +1093,7 @@ StripsManager = {
 
                         if (action.type != 'noop') {
                             solution = solution || [];
-                            solution.unshift(action.action);
+                            solution.unshift(action);
                         }
 
                         for (var j in action.precondition) {
@@ -1132,7 +1132,7 @@ StripsManager = {
                                     var literal2 = goalActions[k];
                                     literal2.operation = literal2.operation || 'and';
 
-                                    if (literal1.action == literal2.action && literal1.operation == literal2.operation) {
+                                    if (literal1.action == literal2.action && literal1.operation == literal2.operation && JSON.stringify(literal1.parameters) == JSON.stringify(literal2.parameters)) {
                                         // Found a goal literal.
                                         var obj = JSON.parse(JSON.stringify(literal1));
                                         delete obj.mutex;
@@ -1152,7 +1152,7 @@ StripsManager = {
                     else {
                         console.log('SOLUTION FOUND!');
                         for (var i in solution) {
-                            console.log(solution[i]);
+                            console.log(StripsManager.actionToString(solution[i]));
                         }
                     }
                 }

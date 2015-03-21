@@ -17,9 +17,9 @@ var xmldom = require('xmldom');
 
 // Load the domain and problem.
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
-    //var graph = strips.graph(domain, problem, 3);
+    //var graph = strips.graph(domain, problem);
 
-//	console.log(util.inspect(graph[1][1], true, 5, true));
+	//console.log(util.inspect(graph[0], true, 10, true));
 	strips.solveGraph(domain, problem);
 
     /*var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
