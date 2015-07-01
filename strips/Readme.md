@@ -51,9 +51,9 @@ strips.load('./examples/blocksworld2/domain.txt', './examples/blocksworld2/probl
 Methods
 -------
 
-#### load(domainPath, problemPath, callback)
+#### load(domainPath, problemPath, callback, isCode)
 
-Loads a domain and problem PDDL file and returns a domain and problem object in the callback.
+Loads a domain and problem in PDDL and returns a domain and problem object in the callback. By default, domainPath and problemPath are expected to be file paths, containing PDDL code. To load from strings instead (if you've already loaded the contents of a file), set domainPath and problemPath to the raw PDDL strings and isCode = true.
 
 #### solve(domain, problem, isDepthFirstSearch = true, maxSolutions = 1, cost = null)
 
@@ -117,6 +117,10 @@ Defaults to true, which uses permutationCombination to calculate possible parame
 #### strips.verbose
 
 Set to true to display status information on the console while searching for a solution.
+
+#### strips.output
+
+Function to allow redirecting verbose output to different stream. By default: strips.output = function(text) { console.log(text); }
 
 #### strips.grammarDomainPath
 
