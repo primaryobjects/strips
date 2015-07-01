@@ -37,20 +37,12 @@ StripsManager = {
         });
     },
 
-    loadGrammarCode: function(grammarFileName, code, callback) {
-        StripsManager.loadCode(grammarFileName, code, function(result) {
-            if (callback) {
-                callback(result);
-            }
-        });
-    },
-
     loadGrammar: function(grammarFileName, codeFileName, callback) {
         // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
         fs.readFile(codeFileName, 'utf8', function(err, code) {
             if (err) throw err;
 
-            StripsManager.loadGrammarCode(grammarFileName, code, function(result) {
+            StripsManager.loadCode(grammarFileName, code, function(result) {
                 if (callback) {
                     callback(result);
                 }
@@ -70,7 +62,7 @@ StripsManager = {
         }
         else {
             // Load from string.
-            StripsManager.loadGrammarCode(StripsManager.grammarDomainPath, filePath, function(result) {
+            StripsManager.loadCode(StripsManager.grammarDomainPath, filePath, function(result) {
                 if (callback) {
                     callback(result);
                 }
@@ -88,7 +80,7 @@ StripsManager = {
         }
         else {
             // Load from string.
-            StripsManager.loadGrammarCode(StripsManager.grammarProblemPath, filePath, function(problem) {
+            StripsManager.loadCode(StripsManager.grammarProblemPath, filePath, function(problem) {
                 StripsManager.initializeProblem(problem, callback)
             });            
         }
