@@ -1,0 +1,53 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; World of Shakey the robot
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (problem turn-light-on-room-3)
+    (:domain shakeysworld)
+
+    (:objects
+        Shakey - ROBOT
+        Ball1 - BALL
+        Room1 Room2 Room3 Room4 - ROOM
+        Switch1 Switch2 Switch3 - SWITCH
+        Box1 - BOX
+        Start Floor Wall - LOCATION
+    )
+    
+    (:init
+        (adj Room1 Room2)
+        (adj Room2 Room1)
+        (adj Room2 Room3)
+        (adj Room3 Room2)
+        (adj Room3 Room4)
+        (adj Room4 Room3)
+
+        (in Start Room1)
+
+        (in Floor Room1)
+        (in Floor Room2)
+        (in Floor Room3)
+        (in Floor Room4)
+        (in Wall Room1)
+        (in Wall Room2)
+        (in Wall Room3)
+        (in Wall Room4)
+        (in Switch1 Room1)
+        (in Switch2 Room2)
+        (in Switch3 Room3)
+
+        (at Shakey Start)
+        (in Shakey Room1)
+
+        (at Switch1 Wall)
+        (at Switch2 Wall)
+        (at Switch3 Wall)
+
+        (at Ball1 Start)
+        (at Box1 Start)
+        (handempty Shakey)
+    )
+
+    (:goal 
+        (and (light-on Room3))
+    )
+)

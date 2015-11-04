@@ -1,0 +1,71 @@
+;
+; Original source: http://rakaposhi.eas.asu.edu/cse574/project1-f04/HemalKhatriDomain/domain.pddl
+; Modified by Kory Becker 11/4/2015 http://primaryobjects.com/kory-becker
+;
+; Shakey's world, or versions thereof, is an AI classic. A robot, named Shakey, is moving around in a set of rooms, 
+; connected by doors. 
+; In the rooms there are light switches, so that the light in the room can be on or off. Spread throughout this world 
+; there are a number of big boxes and a number of smaller balls. 
+; Also there are specific locations in each room where the boxes and robots can be present initially(init1,init2,init3) and where they
+; need to be transfered finally(fin1,fin2,fin3).
+; Here's an example of a rather small world layout: 
+;
+; The follwing restrictions apply to Shakey's actions: 
+;
+; Shakey can carry small balls, but only one at a time because he has only one gripper. 
+; For Shakey to be able to find a door and  move to another room, the light must be on in that room. 
+; Shakey can not carry boxes, but can push them around. 
+; To switch the light in a room on or off Shakey must putdown the ball if it was carrying otherwise he can not 
+; turn on the light switch. 
+;
+
+(define (domain shakeysworld)
+  (:requirements :strips :typing)
+  (:types ROBOT ROOM BOX SWITCH LOCATION BALL)
+  (:action pickup
+	:parameters(?r - ROBOT ?b - BALL ?l - ROOM ?p - LOCATION)
+	:precondition ( and (light-on ?l) (at ?b ?p) (at ?r ?p ) (in ?b ?l) (in ?r ?l) (handempty ?r) )
+	:effect( and (holding ?r ?b) (not (handempty ?r)))
+  )
+
+  
+  (:action putdown
+	:parameters(?r - ROBOT ?b - BALL ?l - ROOM ?p - LOCATION)
+	:precondition ( and (at ?r ?p) (in ?r ?l) (in ?p ?l) (holding ?r ?b) )
+	:effect( and ( handempty ?r) (not (holding ?r ?b)) )
+  )
+  
+
+  (:action pushbox
+	:parameters(?r - ROBOT ?p1 - LOCATION ?l1 - ROOM ?p2 - LOCATION ?l2 - ROOM ?b - BOX ) 
+	:precondition( and (adj ?l1 ?l2) (in ?r ?l1) (at ?r ?p1) (in ?p1 ?l1) (in ?p2 ?l2) (light-on ?l1)
+                         (in ?b ?l1) (at ?b ?p1 ) )
+	:effect (and (in ?r ?l2) (at ?r ?p2) (at ?b ?p2) (in ?b ?l2) (pushing ?r ?b) (not (in ?b ?l1)) (not (in ?r ?l1)) (not (at ?r ?p1))
+                   (not (at ?b ?p1)))  
+  )
+
+ (:action movebetroomswithball
+	:parameters(?r - ROBOT ?p1 - LOCATION ?l1 - ROOM ?p2 - LOCATION ?l2 - ROOM ?b - BALL) 
+	:precondition( and (adj ?l1 ?l2) (in ?r ?l1) (at ?r ?p1) (in ?p1 ?l1) (in ?p2 ?l2) (light-on ?l1) (holding ?r ?b) )
+	:effect (and (in ?r ?l2) (at ?r ?p2) (at ?b ?p2) (in ?b ?l2) (not (in ?r ?l1)) (not (at ?r ?p1)) (not (in ?b ?l1)) (not (at ?b ?p1)) )  
+  )
+
+  (:action movebetroomsemptyhand
+	:parameters(?r - ROBOT ?p1 - LOCATION ?l1 - ROOM ?p2 - LOCATION ?l2 - ROOM) 
+	:precondition( and (adj ?l1 ?l2) (in ?r ?l1) (at ?r ?p1) (in ?p1 ?l1) (in ?p2 ?l2) (light-on ?l1) (handempty ?r) )
+	:effect (and (in ?r ?l2) (at ?r ?p2) (not (in ?r ?l1)) (not (at ?r ?p1)) )  
+  )
+
+  (:action moveinroom
+	:parameters(?r - ROBOT ?l1 - LOCATION ?l2 - LOCATION ?l - ROOM) 
+	:precondition( and (in ?l1 ?l) (in ?l2 ?l) (at ?r ?l1) (in ?r ?l) )
+	:effect (and (at ?r ?l2) (not (at ?r ?l1) ) ) 
+  )
+
+
+  (:action turnon
+	:parameters(?r - ROBOT ?l - ROOM ?s - SWITCH ?sl - LOCATION)
+	:precondition( and (in ?r ?l) (at ?r ?sl) (in ?sl ?l) (at ?s ?sl) (in ?s ?l) (handempty ?r) (not (light-on ?l))) 
+	:effect( light-on ?l ) 
+  )
+)
