@@ -194,11 +194,13 @@ StripsManager = {
                 for (var key in typeCounts) {
                     // Get all combination values for this parameter type.
                     var values = domain.values[key];
-                    var cmb = combinatorics.baseN(values, 1);
+                    if (values) {
+                        var cmb = combinatorics.baseN(values, 1);
 
-                    cmb.forEach(function(combo) {
-                        cases.push(combo);
-                    });
+                        cmb.forEach(function(combo) {
+                            cases.push(combo);
+                        });
+                    }
                 }
             }
 
@@ -217,7 +219,7 @@ StripsManager = {
                     key += value;
 
                     // Check if this value exists in the list for this type.
-                    if (domain.values[type].indexOf(value) == -1) {
+                    if (!domain.values[type] || (domain.values[type] && domain.values[type].indexOf(value) == -1)) {
                         // The value is not part of this type, that means this combo is invalid.
                         return false;
                     }
