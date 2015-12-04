@@ -321,3 +321,81 @@ function saveGraph(d3, el, fileName) {
 
     console.log('Saved ' + fileName);
 }
+
+function printMutex(graph) {
+    var index = 0;
+
+    for (var i in graph) {
+        var layer = graph[i];
+
+        console.log('--- P' + index);
+        console.log('');
+
+        // Filter literals (noops) and actions.
+        var noops = [];
+        var actions = [];
+        layer.forEach(function(item) {
+            if (item.type == 'noop') {
+                noops.push(item);
+            }
+            else {
+                actions.push(item);
+            }
+        });
+
+        // Display literals.
+        noops.forEach(function(noop) {
+            console.log('Action: ' + noop.precondition[0].operation + ' ' + noop.action);
+            console.log('Mutexes:');
+
+            if (noop.mutex) {
+                noop.mutex.forEach(function(mutex) {
+                    // If this is a literal, include the operation (and, not).
+                    var op = '';
+                    if (mutex.operation) {
+                        op = mutex.operation;
+                        op += ' ';
+                    }
+                    else if (mutex.precondition && mutex.precondition[0].action == mutex.action) {
+                        op = mutex.precondition[0].operation;
+                        op += ' ';
+                    }
+
+                    console.log('- ' + op + mutex.action);
+                });
+            }
+
+            console.log('');
+        });
+
+        console.log('--- A' + (index + 1));
+        console.log('');
+
+        // Display actions.
+        actions.forEach(function(action) {
+            console.log('Action: ' + action.action);
+            console.log('Mutexes:');
+
+            if (action.mutex) {
+                action.mutex.forEach(function(mutex) {
+                    // If this is a literal, include the operation (and, not).
+                    var op = '';
+                    if (mutex.operation) {
+                        op = mutex.operation;
+                        op += ' ';
+                    }
+                    else if (mutex.precondition && mutex.precondition[0].action == mutex.action) {
+                        op = mutex.precondition[0].operation;
+                        op += ' ';
+                    }
+
+                    console.log('- ' + op + mutex.action);
+                });
+            }
+
+            console.log('');
+        });
+
+        index++;
+    }
+};
