@@ -3,7 +3,7 @@ Example Planning Graph - AI Planning with STRIPS and PDDL.
 Builds a planning graph for a given domain and problem. Renders the graph using d3.js and saves to a file graph.svg.
 Run using: node --harmony graph
 
-Copyright (c) 2015 Kory Becker
+Copyright (c) 2016 Kory Becker
 http://primaryobjects.com/kory-becker
 
 License MIT
@@ -19,7 +19,7 @@ var xmldom = require('xmldom');
 strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
     var graph = strips.graph(domain, problem);
 
-    var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="js/d3.v3.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
+    var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="http://cdnjs.cloudflare.com/ajax/libs/d3/2.8.1/d3.v2.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
 
@@ -311,9 +311,10 @@ function drawGraph(treeData, window) {
 
 function saveGraph(d3, el, fileName) {
     // Save a d3 graph to an svg file.
-    var svgGraph = d3.select(el).select('svg').attr('xmlns', 'http://www.w3.org/2000/svg');
-    var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph[0][0]);
-    
+    var svgGraph = d3.select(el).select('svg').html();
+    var svgXML = (new xmldom.XMLSerializer()).serializeToString(svgGraph);
+    svgXML = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">' + svgXML + '</svg>';
+
     fs.writeFile(fileName, svgXML);
 
     console.log('Saved ' + fileName);
