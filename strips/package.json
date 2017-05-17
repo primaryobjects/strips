@@ -1,6 +1,6 @@
 {
   "name": "strips",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Basic AI planning with STRIPS and PDDL.",
    "author": {
     "name": "Kory Becker",
@@ -46,6 +46,6 @@
     "sussman",
     "sussman anomaly"
   ],
-  "_id": "strips@0.0.9",
+  "_id": "strips@0.0.10",
   "_from": "strips"
 }

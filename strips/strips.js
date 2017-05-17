@@ -6,7 +6,7 @@ var combinatorics = require('./js-combinatorics/combinatorics.js').Combinatorics
 /*
 AI Planning with STRIPS and PDDL.
 
-Copyright (c) 2015 Kory Becker
+Copyright (c) 2017 Kory Becker
 http://primaryobjects.com/kory-becker
 
 License MIT
@@ -29,7 +29,7 @@ StripsManager = {
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
             if (err) throw err;
          
-            var parser = PEG.buildParser(grammar);
+            var parser = PEG.generate(grammar);
          
             if (callback) {
                 callback(parser.parse(code));
