@@ -28,9 +28,9 @@ StripsManager = {
         // Applies a PEG.js grammar against a code string and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
             if (err) throw err;
-         
-            var parser = PEG.buildParser(grammar);
-         
+
+            var parser = PEG.generate(grammar);
+
             if (callback) {
                 callback(parser.parse(code));
             }
@@ -66,7 +66,7 @@ StripsManager = {
                 if (callback) {
                     callback(result);
                 }
-            });            
+            });
         }
     },
 
@@ -82,10 +82,10 @@ StripsManager = {
             // Load from string.
             StripsManager.loadCode(StripsManager.grammarProblemPath, filePath, function(problem) {
                 StripsManager.initializeProblem(problem, callback)
-            });            
+            });
         }
     },
-    
+
     initializeProblem: function(problem, callback) {
         // Populate list of parameter values.
         var values = {};
@@ -168,7 +168,7 @@ StripsManager = {
 
         return cmb.toArray();
     },
-    
+
     parameterCombinations: function(domain, action) {
         // Go through each required parameter, look at the type (if using :typing), and use all combinations of values belonging to that type.
         var cases = [];
@@ -258,19 +258,19 @@ StripsManager = {
     andCount: function(precondition) {
         // Returns the count for the number of 'and' matches in a precondition.
         var count = 0;
-        
+
         for (var i in precondition) {
             var action = precondition[i];
             var operation = action.operation || 'and'; // If no operation is specified, default to 'and'. Must explicitly provide 'not' where required.
-            
+
             if (operation == 'and') {
                 count++;
             }
         }
-        
+
         return count;
     },
-    
+
     isEqual: function(action1, action2) {
         // Returns true if action1 == action2. Compares name and parameters.
         var result = false;
@@ -294,7 +294,7 @@ StripsManager = {
                 }
             }
         }
-        
+
         return result;
     },
 
@@ -324,7 +324,7 @@ StripsManager = {
                 }
 
                 if (match) {
-                    // This action exists in the state.                    
+                    // This action exists in the state.
                     if (operation == 'and') {
                         matchCount++;
                     }
@@ -335,11 +335,11 @@ StripsManager = {
                     }
                 }
             }
-            
+
             if (matchCount == -1)
                 break;
         }
-        
+
         return (matchCount == andCount);
     },
 
@@ -358,7 +358,7 @@ StripsManager = {
                 for (var n in effect.parameters) {
                     var parameter = effect.parameters[n];
                     var value = action.map[parameter];
-                    
+
                     if (value) {
                         // Assign this value to all instances of this parameter in the effect.
                         populatedEffect[m].parameters[n] = value;
@@ -368,15 +368,15 @@ StripsManager = {
                     }
                 }
             }
-            
+
             resolvedAction = JSON.parse(JSON.stringify(action));
             resolvedAction.effect = populatedEffect;
             resolvedAction.map = action.map;
         }
-        
+
         return resolvedAction;
     },
-    
+
     applicableActionsPlus: function(domain, state) {
         // Returns an array of applicable concrete actions for the current state, including support for negative literals. This method runs StripsManager.applicableActions() two times - one with all positive literals (negative literals removed, which effectively renders all positive literal cases), and one with all positive literals with none that had matching negative literals (which effectively renders all negative literal cases). The result includes a list of unique actions.
         var result = [];
@@ -472,7 +472,7 @@ StripsManager = {
             for (var j in action.parameterCombinations) {
                 var testCase = action.parameterCombinations[j];
                 var nindex = 0;
-                
+
                 var parameterMap = []; // map of parameter values to be populated
                 // Initialize default parameter values for this action. We'll set concrete values next.
                 for (var j in parameters) {
@@ -484,10 +484,10 @@ StripsManager = {
                 for (var k in action.precondition) {
                     var precondition = action.precondition[k];
                     var populatedPreconditionPart = JSON.parse(JSON.stringify(precondition)); // copy for replacing parameters with actual values.
-                    
+
                     // Found a matching action. So far, so good.
                     var parameterIndex = 0;
-                    
+
                     // Assign a value to each parameter of the precondition.
                     for (var l in precondition.parameters) {
                         var parameter = precondition.parameters[l];
@@ -496,7 +496,7 @@ StripsManager = {
                         // Assign this value to all instances of this parameter in the precondition.
                         populatedPreconditionPart.parameters[l] = value;
                     }
-                    
+
                     populatedAction.precondition[k] = populatedPreconditionPart;
                     populatedAction.map = parameterMap;
                 }
@@ -531,7 +531,7 @@ StripsManager = {
         for (var i in action.effect) {
             var actionOperation = action.effect[i];
             var operation = actionOperation.operation || 'and';
-            
+
             if (operation == 'and') {
                 // Make sure this predicate doesn't already exist in the state.
                 var isExists = false;
@@ -546,7 +546,7 @@ StripsManager = {
                 if (!isExists) {
                     // Add this predicate to the state.
                     result.actions.push(actionOperation);
-                }                
+                }
             }
             else {
                 // Remove this predicate from the state.
@@ -673,14 +673,14 @@ StripsManager = {
             // If no other option specified, use depth-first-search by default.
             isDfs = true;
         }
-        
+
         maxSolutions = maxSolutions || 1;
 
         if (cost && typeof(cost) != 'function') {
             StripsManager.output('ERROR: parameter "cost" must be a function to serve as the A* algorithm heuristic. Method: solve(domain, problem, isDepthFirstSearch, cost, maxSolutions). Usage: solve(domain, problem), solve(domain, problem, false), solve(domain, problem, cost).');
             return;
         }
-        
+
         if (StripsManager.verbose) {
             StripsManager.output('Using ' + (cost ? 'A*' : (isDfs ? 'depth' : 'breadth') + '-first-search') + '.');
             StripsManager.output('');
@@ -725,7 +725,7 @@ StripsManager = {
             if (StripsManager.verbose) {
                 StripsManager.output('Depth: ' + depth + ', ' + fringe.length + ' child states.');
             }
-            
+
             // Run against each new child state.
             for (var i in fringe) {
                 var child = fringe[i];
@@ -814,7 +814,7 @@ StripsManager = {
 
         return solutions;
     },
-    
+
     solveAs:function(domain, state, goalState, cost) {
         // Find first solution using A* search, where cost is the heuristic function (h = cost(state)). Starting with the initial state, we find all children by applying applicable actions on the current state, calculate the child state costs, and select the next cheapest state to visit.
         var depth = 0;
@@ -858,12 +858,12 @@ StripsManager = {
                     child.parent = current;
                     child.g = current.g + 1;
                     child.h = cost(child.state);
-                    
+
                     if (!visited[StripsManager.stateToString(child.state)]) {
                         fringe.push(child);
                     }
                 }
-                
+
                 fringe.sort(function(a, b) { return (a.h + a.g) - (b.h + b.g) });
             }
 
@@ -903,7 +903,7 @@ StripsManager = {
                         layer.push(noop);
 
                         literalHash[JSON.stringify(literal)] = 1;
-                
+
                         // Keep a count of all literals in this layer so we know if we found any new ones after graphing.
                         literalCount++;
                     }
@@ -955,12 +955,12 @@ StripsManager = {
             noop.precondition = noop.precondition || [];
             noop.precondition.push(problem.states[0].actions[i]);
             noop.effect = noop.precondition;
-            layer.push(noop);    
+            layer.push(noop);
         }
 
         // A0 - Get all applicable actions for the initial state.
         var actions = StripsManager.applicableActionsPlus(domain, problem.states[0]);
-        
+
         // Initialize global graph helper counters.
         lastLiteralCount = layer.length;
         lastActionCount = actions.length;
