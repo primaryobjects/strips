@@ -222,5 +222,5 @@ License
 
 MIT
 
-Copyright (c) 2015 Kory Becker
+Copyright (c) 2017 Kory Becker
 http://primaryobjects.com/kory-becker
