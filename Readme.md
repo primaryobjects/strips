@@ -1,13 +1,17 @@
 ﻿AI Planning with STRIPS
 --------
 
-This project is a demo of using the artificial intelligence planning library [strips](https://www.npmjs.com/package/strips), in node.js.
+This project is a demo of using the artificial intelligence automated planning library [strips](https://www.npmjs.com/package/strips), in node.js.
 
 Try it online at https://stripsfiddle.herokuapp.com
 
 ```
 npm install strips
 ```
+
+If you're new to STRIPS automated planning, here is a great [tutorial](http://www.primaryobjects.com/2015/11/06/artificial-intelligence-planning-with-strips-a-gentle-introduction/) to get you started.
+
+## Examples
 
 The following examples show how to solve planning problems by identifying the optimal set of actions to achieve a goal. For example, stacking blocks, Towers of Hanoi, and even [Starcraft](https://github.com/primaryobjects/strips#starcraft) can be solved by the AI (see below, it's pretty neat!).
 
