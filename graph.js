@@ -53,33 +53,35 @@ function getTreeData(graph, layerIndex) {
         }
 
         // Start action node.
-        var node = { name: name, parent: null, children: [] };
+        var node = { name: name, parent: null, children: [], mutex: action.mutex };
         var p0 = null;
         var p1 = null;
-
+//console.log(node.name);
+//console.log(node.mutex);
         // P0
         for (var k in action.precondition) {
             var act = action.precondition[k];
+            if (act.action) {
+                var name = (act.operation || 'and') + '-' + act.action + '-';
+                for (var l in act.parameters) {
+                    name += act.parameters[l] + ' ';
+                }
 
-            var name = (act.operation || 'and') + '-' + act.action + '-';
-            for (var l in act.parameters) {
-                name += act.parameters[l] + ' ';
+                p0 = actionHash[name];
+                if (!p0) {
+                    // New parent node.
+                    p0 = { name: name, parent: treeData[0].name, children: [ node ]/*, mutex: action.mutex*/ };
+                    parent.push(p0);
+
+                    actionHash[name] = p0;
+                }
+                else {
+                    // This is a child node of the parent.
+                    p0.children.push(node);
+                }   
+
+                node.parent = p0.name;
             }
-
-            p0 = actionHash[name];
-            if (!p0) {
-                // New parent node.
-                p0 = { name: name, parent: treeData[0].name, children: [ node ] };
-                parent.push(p0);
-
-                actionHash[name] = p0;
-            }
-            else {
-                // This is a child node of the parent.
-                p0.children.push(node);
-            }   
-                         
-            node.parent = p0.name;
         }
 
         // P1
@@ -113,15 +115,20 @@ function getGraphData(graph, layerIndex) {
     for (var i in tree[0].children) {
         var node = tree[0].children[i];
 
-        data.nodes.push({ name: node.name, depth: 1 });
+        var baseNode = { name: node.name, mutex: node.mutex, depth: 1 };
+        data.nodes.push(baseNode);
+
         var parentIndex = data.nodes.length - 1;
         data.links.push({ source: 0, target: parentIndex, depth: 1 });
 
         for (var j in node.children) {
             var node2 = node.children[j];
 
+            baseNode.mutex = baseNode.mutex || node2.mutex;
+//console.log(node2.name);
+//console.log(node2.mutex);
             if (node2.name.indexOf('noop') != -1 || !node2Hash[node2.name]) {
-                data.nodes.push({ name: node2.name, depth: 2 });
+                data.nodes.push({ name: node2.name, mutex: node2.name.indexOf('noop') === -1 ? node2.mutex : null, depth: 2 });
                 data.links.push({ source: parentIndex, target: data.nodes.length - 1, depth: 2 });
 
                 // Remember this node along with its index, in case we need to link to it again.
@@ -268,8 +275,18 @@ function drawGraph(treeData, window) {
         .attr("dx", 12)
         .attr("dy", ".35em")
         .text(function(d) { return d.name })
-        .style('font', '8px sans-serif')
-        .style('color', '#000');
+        .style('font-family', 'arial')
+        .style('font-size', '14px')
+        .style('fill', '#000');
+
+    // Display mutexes.
+    gnodes.append("text")
+        .attr("dx", 20)
+        .attr("dy", 12)
+        .style('font-family', 'arial')
+        .style('font-size', '10px')
+        .style('fill', '#f00')
+        .text(function(d) { return formatMutex(d).map(mutex => { return (mutex.op ? mutex.op + ' ' : '') + mutex.action }).join(', ') });
 
     force.on("tick", function(e) {
         var ky = e.alpha;
@@ -321,6 +338,35 @@ function saveGraph(d3, el, fileName) {
     console.log('Saved ' + fileName);
 }
 
+var formatMutex = function(action) {
+    var formatted = [];
+
+    if (action.mutex) {
+        action.mutex.forEach(function(mutex) {
+            // If this is a literal, include the operation (and, not).
+            var op = mutex.operation;
+            if (!op && mutex.precondition && mutex.precondition[0].action == mutex.action) {
+                op = mutex.precondition[0].operation;
+            }
+
+            formatted.push({ op: op, action: mutex.action, reason: mutex.reason });
+        });
+    }
+
+    return formatted;
+};
+
+var displayMutex = function(action, isNoop) {
+    console.log('Action: ' + (isNoop ? (action.precondition[0].operation + ' ' + action.action) : action.action));
+    console.log('Mutexes:');
+
+    formatMutex(action).forEach(mutex => {
+        console.log('- ' + (mutex.op ? mutex.op + ' ' : '') + mutex.action + ' (' + mutex.reason + ')');
+    });
+
+    console.log('');
+};
+
 function printMutex(graph) {
     var index = 0;
 
@@ -343,56 +389,16 @@ function printMutex(graph) {
         });
 
         // Display literals.
-        noops.forEach(function(noop) {
-            console.log('Action: ' + noop.precondition[0].operation + ' ' + noop.action);
-            console.log('Mutexes:');
-
-            if (noop.mutex) {
-                noop.mutex.forEach(function(mutex) {
-                    // If this is a literal, include the operation (and, not).
-                    var op = '';
-                    if (mutex.operation) {
-                        op = mutex.operation;
-                        op += ' ';
-                    }
-                    else if (mutex.precondition && mutex.precondition[0].action == mutex.action) {
-                        op = mutex.precondition[0].operation;
-                        op += ' ';
-                    }
-
-                    console.log('- ' + op + mutex.action);
-                });
-            }
-
-            console.log('');
+        layer.filter(item => item.type === 'noop').forEach(action => {
+            displayMutex(action, true);
         });
 
         console.log('--- A' + (index + 1));
         console.log('');
 
         // Display actions.
-        actions.forEach(function(action) {
-            console.log('Action: ' + action.action);
-            console.log('Mutexes:');
-
-            if (action.mutex) {
-                action.mutex.forEach(function(mutex) {
-                    // If this is a literal, include the operation (and, not).
-                    var op = '';
-                    if (mutex.operation) {
-                        op = mutex.operation;
-                        op += ' ';
-                    }
-                    else if (mutex.precondition && mutex.precondition[0].action == mutex.action) {
-                        op = mutex.precondition[0].operation;
-                        op += ' ';
-                    }
-
-                    console.log('- ' + op + mutex.action);
-                });
-            }
-
-            console.log('');
+        layer.filter(item => item.type !== 'noop').forEach(action => {
+            displayMutex(action);
         });
 
         index++;

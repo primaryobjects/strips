@@ -1420,7 +1420,7 @@ StripsManager = {
                         // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                         action.mutex = action.mutex || [];
                         action.mutexHash = action.mutexHash || {};
-                        var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect };
+                        var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, reason: 'inconsistentEffect' };
                         var objStr = JSON.stringify(obj);
                         if (!action.mutexHash[objStr]) {
                             action.mutex.push(obj);
@@ -1429,7 +1429,7 @@ StripsManager = {
 
                         subMutexAction.mutex = subMutexAction.mutex || [];
                         subMutexAction.mutexHash = subMutexAction.mutexHash || {};
-                        obj = { action: action.action, precondition: action.precondition, effect: action.effect };
+                        obj = { action: action.action, precondition: action.precondition, effect: action.effect, reason: 'inconsistentEffect' };
                         objStr = JSON.stringify(obj);
                         if (!subMutexAction.mutexHash[objStr]) {
                             subMutexAction.mutex.push(obj);
@@ -1465,7 +1465,7 @@ StripsManager = {
                             // Found an opposite (not us). The action at the hash value is a mutex with the current action and vice-versa.
                             action.mutex = action.mutex || [];
                             action.mutexHash = action.mutexHash || {};
-                            var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect };
+                            var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, reason: 'interference' };
                             var objStr = JSON.stringify(obj);
                             if (!action.mutexHash[objStr]) {
                                 action.mutex.push(obj);
@@ -1474,7 +1474,7 @@ StripsManager = {
 
                             subMutexAction.mutex = subMutexAction.mutex || [];
                             subMutexAction.mutexHash = subMutexAction.mutexHash || {};
-                            obj = { action: action.action, precondition: action.precondition, effect: action.effect };
+                            obj = { action: action.action, precondition: action.precondition, effect: action.effect, reason: 'interference' };
                             objStr = JSON.stringify(obj);
                             if (!subMutexAction.mutexHash[objStr]) {
                                 subMutexAction.mutex.push(obj);
@@ -1511,7 +1511,7 @@ StripsManager = {
                     // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                     effect.mutex = effect.mutex || [];
                     effect.mutexHash = effect.mutexHash || {};
-                    var obj = { action: oppositeEffect.action, operation: oppositeEffect.operation, parameters: oppositeEffect.parameters };
+                    var obj = { action: oppositeEffect.action, operation: oppositeEffect.operation, parameters: oppositeEffect.parameters, reason: 'negation' };
                     var objStr = JSON.stringify(obj);
                     if (!effect.mutexHash[objStr]) {
                         effect.mutex.push(obj);
@@ -1610,7 +1610,7 @@ StripsManager = {
                             literal1.mutex = literal1.mutex || [];
                             literal1.mutexHash = literal1.mutexHash || {};
 
-                            var mutex = { action: literal2.action, operation: literal2.operation, parameters: literal2.parameters };
+                            var mutex = { action: literal2.action, operation: literal2.operation, parameters: literal2.parameters, reason: 'inconsistentSupport' };
                             var mutexStr = JSON.stringify(mutex);
                             if (!literal1.mutexHash[mutexStr]) {
                                 literal1.mutex.push(mutex);
