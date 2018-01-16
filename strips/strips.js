@@ -6,7 +6,7 @@ var combinatorics = require('./js-combinatorics/combinatorics.js').Combinatorics
 /*
 AI Planning with STRIPS and PDDL.
 
-Copyright (c) 2015 Kory Becker
+Copyright (c) 2017 Kory Becker
 http://primaryobjects.com/kory-becker
 
 License MIT
@@ -17,85 +17,120 @@ StripsManager = {
     fast: true,
     // Set to true to display status information on the console while searching for a solution.
     verbose: false,
+    // Set to redirect output to different stream, uses console.log() by default.
+    output: function(text) { console.log(text); },
     // PEG.js grammar for domain.
     grammarDomainPath: __dirname + '/grammar/grammar-domain.txt',
     // PEG.js grammer for problem.
     grammarProblemPath: __dirname + '/grammar/grammar-problem.txt',
 
-    loadGrammar: function(grammarFileName, codeFileName, callback) {
-        // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
+    loadCode: function(grammarFileName, code, callback) {
+        // Applies a PEG.js grammar against a code string and returns the parsed JSON result.
         fs.readFile(grammarFileName, 'utf8', function(err, grammar) {
             if (err) throw err;
          
-            var parser = PEG.buildParser(grammar);
+            var parser = PEG.generate(grammar);
          
-            fs.readFile(codeFileName, 'utf8', function(err, code) {
-                if (err) throw err;
+            if (callback) {
+                callback(parser.parse(code));
+            }
+        });
+    },
 
+    loadGrammar: function(grammarFileName, codeFileName, callback) {
+        // Applies a PEG.js grammar against a code file and returns the parsed JSON result.
+        fs.readFile(codeFileName, 'utf8', function(err, code) {
+            if (err) throw err;
+
+            StripsManager.loadCode(grammarFileName, code, function(result) {
                 if (callback) {
-                    callback(parser.parse(code));
+                    callback(result);
                 }
             });
         });
     },
 
-    loadDomain: function(filePath, callback) {
+    loadDomain: function(filePath, callback, isCode) {
         // Applies the PEG.js grammar for a STRIPS PDDL domain file and returns the parsed JSON result.
-        StripsManager.loadGrammar(StripsManager.grammarDomainPath, filePath, function(result) {
-            if (callback) {
-                callback(result);
-            }
-        });
+        if (!isCode) {
+            StripsManager.loadGrammar(StripsManager.grammarDomainPath, filePath, function(result) {
+                // Load from file path.
+                if (callback) {
+                    callback(result);
+                }
+            });
+        }
+        else {
+            // Load from string.
+            StripsManager.loadCode(StripsManager.grammarDomainPath, filePath, function(result) {
+                if (callback) {
+                    callback(result);
+                }
+            });            
+        }
     },
 
-    loadProblem: function(filePath, callback) {
+    loadProblem: function(filePath, callback, isCode) {
         // Applies the PEG.js grammar for a STRIPS PDDL problem file and returns the parsed JSON result.
-        StripsManager.loadGrammar(StripsManager.grammarProblemPath, filePath, function(result) {
-            // Populate list of parameter values.
-            var values = {};
-            for (var i in result.states) {
-                var state = result.states[i];
-                for (var j in state.actions) {
-                    var action = state.actions[j];
-
-                    // Collect all unique parameter values.
-                    for (var k in action.parameters) {
-                        values[action.parameters[k]] = 1;
-                    }
-                }
-            }
-
-            // Set parameter values list on result.
-            result.values = {};
-            for (var key in values) {
-                // Look-up type for this value in the objects declaration.
-                var type = null;
-
-                for (var i in result.objects) {
-                    for (var j in result.objects[i].parameters) {
-                        var parameter = result.objects[i].parameters[j];
-                        if (parameter == key) {
-                            type = result.objects[i].type;
-                            break;
-                        }
-                    }
-
-                    if (type)
-                        break;
-                }
-
-                result.values[type] = result.values[type] || [];
-                result.values[type].push(key);
-            }
-
-            if (callback) {
-                callback(result);
-            }
-        });
+        if (!isCode) {
+            // Load from file path.
+            StripsManager.loadGrammar(StripsManager.grammarProblemPath, filePath, function(problem) {
+                StripsManager.initializeProblem(problem, callback)
+            });
+        }
+        else {
+            // Load from string.
+            StripsManager.loadCode(StripsManager.grammarProblemPath, filePath, function(problem) {
+                StripsManager.initializeProblem(problem, callback)
+            });            
+        }
     },
     
-    load: function(domainPath, problemPath, callback) {
-        // Load the domain and actions.
+    initializeProblem: function(problem, callback) {
+        // Populate list of parameter values.
+        var values = {};
+        for (var i in problem.states) {
+            var state = problem.states[i];
+            for (var j in state.actions) {
+                var action = state.actions[j];
+
+                // Collect all unique parameter values.
+                for (var k in action.parameters) {
+                    values[action.parameters[k]] = 1;
+                }
+            }
+        }
+
+        // Set parameter values list on problem.
+        problem.values = {};
+        for (var key in values) {
+            // Look-up type for this value in the objects declaration.
+            var type = null;
+
+            for (var i in problem.objects) {
+                for (var j in problem.objects[i].parameters) {
+                    var parameter = problem.objects[i].parameters[j];
+                    if (parameter == key) {
+                        type = problem.objects[i].type;
+                        break;
+                    }
+                }
+
+                if (type)
+                    break;
+            }
+
+            problem.values[type] = problem.values[type] || [];
+            problem.values[type].push(key);
+        }
+
+        if (callback) {
+            callback(problem);
+        }
+    },
+
+    load: function(domainPath, problemPath, callback, isCode) {
+        // Load the domain and actions. If isCode is true, domainPath and problemPath are strings of PDDL code, otherwise they are filePaths.
         StripsManager.loadDomain(domainPath, function(domain) {
             // Load the problem.
             StripsManager.loadProblem(problemPath, function(problem) {
@@ -103,7 +138,7 @@ StripsManager = {
                 domain.values = problem.values;
 
                 if (domain.requirements.indexOf('typing') != -1 && domain.values.null) {
-                    console.log('ERROR: :typing is specified in domain, but not all parameters declare a type. Verify problem file contains an :objects section.');
+                    StripsManager.output('ERROR: :typing is specified in domain, but not all parameters declare a type. Verify problem file contains an :objects section.');
                 }
 
                 // Load list of applicable combinations of parameter values for each action.
@@ -115,8 +150,8 @@ StripsManager = {
                 if (callback) {
                     callback(domain, problem);
                 }
-            });
-        });
+            }, isCode);
+        }, isCode);
     },
 
     predicateCombinations: function(state) {
@@ -146,7 +181,7 @@ StripsManager = {
             var typeCounts = {};
             for (var j in parameters) {
                 if (!parameters[j].type) {
-                    console.log('ERROR: :typing is specified, but no type found in action "' + action.action + '" for parameter "' + parameters[j].parameter + '"');
+                    StripsManager.output('ERROR: :typing is specified, but no type found in action "' + action.action + '" for parameter "' + parameters[j].parameter + '"');
                     error = true;
                     break;
                 }
@@ -159,11 +194,13 @@ StripsManager = {
                 for (var key in typeCounts) {
                     // Get all combination values for this parameter type.
                     var values = domain.values[key];
-                    var cmb = combinatorics.baseN(values, 1);
+                    if (values) {
+                        var cmb = combinatorics.baseN(values, 1);
 
-                    cmb.forEach(function(combo) {
-                        cases.push(combo);
-                    });
+                        cmb.forEach(function(combo) {
+                            cases.push(combo);
+                        });
+                    }
                 }
             }
 
@@ -182,7 +219,7 @@ StripsManager = {
                     key += value;
 
                     // Check if this value exists in the list for this type.
-                    if (domain.values[type].indexOf(value) == -1) {
+                    if (!domain.values[type] || (domain.values[type] && domain.values[type].indexOf(value) == -1)) {
                         // The value is not part of this type, that means this combo is invalid.
                         return false;
                     }
@@ -327,7 +364,7 @@ StripsManager = {
                         populatedEffect[m].parameters[n] = value;
                     }
                     else {
-                        console.log('* ERROR: Value not found for parameter ' + parameter + '.');
+                        StripsManager.output('* ERROR: Value not found for parameter ' + parameter + '.');
                     }
                 }
             }
@@ -421,7 +458,7 @@ StripsManager = {
         var result = [];
 
         if (!domain.values || domain.values.length == 0) {
-            console.log('ERROR: No parameter values found in domain.values.');
+            StripsManager.output('ERROR: No parameter values found in domain.values.');
             return;
         }
 
@@ -640,13 +677,13 @@ StripsManager = {
         maxSolutions = maxSolutions || 1;
 
         if (cost && typeof(cost) != 'function') {
-            console.log('ERROR: parameter "cost" must be a function to serve as the A* algorithm heuristic. Method: solve(domain, problem, isDepthFirstSearch, cost, maxSolutions). Usage: solve(domain, problem), solve(domain, problem, false), solve(domain, problem, cost).');
+            StripsManager.output('ERROR: parameter "cost" must be a function to serve as the A* algorithm heuristic. Method: solve(domain, problem, isDepthFirstSearch, cost, maxSolutions). Usage: solve(domain, problem), solve(domain, problem, false), solve(domain, problem, cost).');
             return;
         }
         
         if (StripsManager.verbose) {
-            console.log('Using ' + (cost ? 'A*' : (isDfs ? 'depth' : 'breadth') + '-first-search') + '.');
-            console.log('');
+            StripsManager.output('Using ' + (cost ? 'A*' : (isDfs ? 'depth' : 'breadth') + '-first-search') + '.');
+            StripsManager.output('');
         }
 
         return cost ? StripsManager.solveAs(domain, problem.states[0], problem.states[1], cost) :
@@ -686,7 +723,7 @@ StripsManager = {
             var fringe = StripsManager.getChildStates(domain, state.state);
 
             if (StripsManager.verbose) {
-                console.log('Depth: ' + depth + ', ' + fringe.length + ' child states.');
+                StripsManager.output('Depth: ' + depth + ', ' + fringe.length + ' child states.');
             }
             
             // Run against each new child state.
@@ -771,7 +808,7 @@ StripsManager = {
             }
 
             if (StripsManager.verbose) {
-                console.log('Depth: ' + current.depth + ', ' + fringe.length + ' child states.');
+                StripsManager.output('Depth: ' + current.depth + ', ' + fringe.length + ' child states.');
             }
         }
 
@@ -831,7 +868,7 @@ StripsManager = {
             }
 
             if (StripsManager.verbose) {
-                console.log('Depth: ' + current.g + ', Current cost: ' + (current.h + current.g) + ', ' + fringe.length + ' child states.');
+                StripsManager.output('Depth: ' + current.g + ', Current cost: ' + (current.h + current.g) + ', ' + fringe.length + ' child states.');
             }
         }
 
@@ -1213,7 +1250,7 @@ StripsManager = {
         }
 
         if (StripsManager.verbose) {
-            console.log('P' + lastGraphIndex + ': ' + lastLiteralCount + ', A' + (lastGraphIndex+1) + ': ' + lastActionCount + ', P' + (lastGraphIndex+1) + ': ' + literalCount + ', A' + (lastGraphIndex+2) + ': ' + actionCount);
+            StripsManager.output('P' + lastGraphIndex + ': ' + lastLiteralCount + ', A' + (lastGraphIndex+1) + ': ' + lastActionCount + ', P' + (lastGraphIndex+1) + ': ' + literalCount + ', A' + (lastGraphIndex+2) + ': ' + actionCount);
         }
 
         lastGraphIndex++;
@@ -1269,7 +1306,7 @@ StripsManager = {
         var layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals);
         while ((!layer.done || (minLayers && index < minLayers)) && (!maxLayers || index < maxLayers)) {
             if (StripsManager.verbose) {
-                console.log('Processing layer ' + index);
+                StripsManager.output('Processing layer ' + index);
             }
 
             result.push(layer.layer);

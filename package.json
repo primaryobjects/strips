@@ -1,8 +1,8 @@
 {
     "name": "strips-demo",
-    "version": "0.0.4",
+    "version": "0.0.6",
     "description": "Basic AI planning with STRIPS and PDDL.",
-     "author": {
+    "author": {
         "name": "Kory Becker",
         "email": "kbecker@primaryobjects.com",
         "url": "http://www.primaryobjects.com/kory-becker"
@@ -10,8 +10,8 @@
     "dependencies": {
         "pegjs": "*",
         "strips": "*",
-        "d3": "*",
-        "jsdom": "*",
+        "d3": "3.*",
+        "jsdom": "9.12.0",
         "xmldom": "*"
     },
     "engines": {
