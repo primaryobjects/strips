@@ -1,9 +1,9 @@
 /*
 Example Planning Graph - AI Planning with STRIPS and PDDL.
 Builds a planning graph for a given domain and problem. Renders the graph using d3.js and saves to a file graph.svg.
-Run using: node --harmony graph
+Run using: node graph
 
-Copyright (c) 2017 Kory Becker
+Copyright (c) 2018 Kory Becker
 http://primaryobjects.com/kory-becker
 
 License MIT

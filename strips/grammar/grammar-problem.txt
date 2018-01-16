@@ -1,7 +1,7 @@
 /* 
 PDDL2JSON - PEG.js (http://pegjs.org) grammar parser script for converting PDDL to JSON. Designed for strips "problem" files.
 
-Copyright (c) 2015 Kory Becker
+Copyright (c) 2018 Kory Becker
 http://primaryobjects.com/kory-becker
 */
 

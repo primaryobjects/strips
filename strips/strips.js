@@ -6,7 +6,7 @@ var combinatorics = require('./js-combinatorics/combinatorics.js').Combinatorics
 /*
 AI Planning with STRIPS and PDDL.
 
-Copyright (c) 2017 Kory Becker
+Copyright (c) 2018 Kory Becker
 http://primaryobjects.com/kory-becker
 
 License MIT
