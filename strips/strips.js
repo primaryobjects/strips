@@ -1315,6 +1315,16 @@ StripsManager = {
             layer = StripsManager.nextGraphLayer(domain, result[index++], isSkipNegativeLiterals);
         }
 
+        // Final ending literals (P1).
+        var layerP1 = [];
+        for (var i in layer.layer) {
+            // P1 - B. Carry forward literals from parent.
+            if (layer.layer[i].type === 'noop') {
+                layerP1.push(layer.layer[i]);
+            }
+        }
+        result.push(layerP1);
+
         if (!isSkipMutex) {
             // Mark mutex relationships in the graph.
             result = StripsManager.markMutex(result);

@@ -93,7 +93,7 @@ function getTreeData(graph, layerIndex) {
                 name += act.parameters[l] + ' ';
             }
 
-            p1 = { name: name, parent: node.name, children: [] };
+            p1 = { name: name, parent: node.name, children: [], mutex: act.mutex };
             node.children.push(p1);
         }
     }
@@ -145,7 +145,7 @@ function getGraphData(graph, layerIndex) {
                 var node3 = node2.children[k];
 
                 if (node3.name.indexOf('noop') != -1 || !node3Hash[node3.name]) {
-                    data.nodes.push({ name: node3.name, depth: 3 });
+                    data.nodes.push({ name: node3.name, mutex: node3.mutex, depth: 3 });
                     data.links.push({ source: parentIndex2, target: data.nodes.length - 1, depth: 3 });
 
                     // Remember this node along with its index, in case we need to link to it again.
@@ -393,13 +393,16 @@ function printMutex(graph) {
             displayMutex(action, true);
         });
 
-        console.log('--- A' + (index + 1));
-        console.log('');
+        // If this is the final literal layer (P1), don't print out empty actions.
+        if (i < graph.length - 1) {
+	        console.log('--- A' + index);
+	        console.log('');
 
-        // Display actions.
-        layer.filter(item => item.type !== 'noop').forEach(action => {
-            displayMutex(action);
-        });
+	        // Display actions.
+	        layer.filter(item => item.type !== 'noop').forEach(action => {
+	            displayMutex(action);
+	        });
+    	}
 
         index++;
     }
