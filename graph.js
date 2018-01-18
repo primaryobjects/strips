@@ -8,7 +8,7 @@ http://primaryobjects.com/kory-becker
 
 License MIT
 */
-var strips = require('./strips');
+var graphPlan = require('./strips/graphplan');
 var util = require('util');
 var fs = require('fs');
 var d3 = require('d3');
@@ -16,151 +16,19 @@ var jsdom = require('jsdom');
 var xmldom = require('xmldom');
 
 // Load the domain and problem.
-strips.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
-    var graph = strips.graph(domain, problem);
-    //strips.solveGraph(domain, problem);
+graphPlan.load('./examples/dinner/domain.pddl', './examples/dinner/problem.pddl', function(domain, problem) {
+    var graph = graphPlan.graph(domain, problem);
+    //graphPlan.solve(domain, problem);
 
     var htmlStub = '<html><head></head><body><div id="dataviz-container"></div><script src="http://cdnjs.cloudflare.com/ajax/libs/d3/2.8.1/d3.v2.min.js"></script></body></html>'; // html file skull with a container div for the d3 dataviz
     jsdom.env({ features : { QuerySelector : true }, html : htmlStub, done : function(errors, window) {
         // Process the html document, like if we were at client side.
 
         // Display an image of the planning graph at layer 0.
-        //drawTree(getTreeData(graph, 0), window);
-        drawGraph(getGraphData(graph, 0), window);
+        //drawTree(graphPlan.tree(graph), window);
+        drawGraph(graphPlan.nodes(graph), window);
     }});
 });
-
-//
-// Utility methods for d3.js, to convert strips json into d3.js format and plot graphs.
-//
-function getTreeData(graph, layerIndex) {
-    // Convert the graph into a d3 tree format, so we can plot the graph.
-    var treeData = [ { name: 'root', parent: 'null' }];
-    var parent = [];
-
-    var i = layerIndex; // layer of graph to print
-    var layer = graph[i];
-    var actionHash = {};
-    var actionHash2 = {};
-    
-    for (var j in layer) {
-        var action = layer[j];
-
-        // Format action name: 'cook x y z'.
-        var name = (action.type === 'noop' ? 'noop-' : '') + action.action + (action.parameters ? '-' : '');
-        for (var k in action.parameters) {
-            name += action.parameters[k].parameter + ' ';
-        }
-
-        // Start action node.
-        var node = { name: name, parent: null, children: [], mutex: action.mutex };
-        var p0 = null;
-        var p1 = null;
-//console.log(node.name);
-//console.log(node.mutex);
-        // P0
-        for (var k in action.precondition) {
-            var act = action.precondition[k];
-            if (act.action) {
-                var name = (act.operation || 'and') + '-' + act.action + '-';
-                for (var l in act.parameters) {
-                    name += act.parameters[l] + ' ';
-                }
-
-                p0 = actionHash[name];
-                if (!p0) {
-                    // New parent node.
-                    p0 = { name: name, parent: treeData[0].name, children: [ node ]/*, mutex: action.mutex*/ };
-                    parent.push(p0);
-
-                    actionHash[name] = p0;
-                }
-                else {
-                    // This is a child node of the parent.
-                    p0.children.push(node);
-                }   
-
-                node.parent = p0.name;
-            }
-        }
-
-        // P1
-        for (var k in action.effect) {
-            var act = action.effect[k];
-
-            var name = (act.operation || 'and') + '-' + act.action + '-';
-            for (var l in act.parameters) {
-                name += act.parameters[l] + ' ';
-            }
-
-            p1 = { name: name, parent: node.name, children: [], mutex: act.mutex };
-            node.children.push(p1);
-        }
-    }
-
-    treeData[0].children = parent;
-
-    return treeData;
-}
-
-function getGraphData(graph, layerIndex) {
-    // Convert the graph into a d3 force format, so we can plot the graph.
-    var data = { nodes: [ { name: 'root', depth: 0 }], links: [] };
-    var node2Hash = {};
-    var node3Hash = {};
-
-    var tree = getTreeData(graph, layerIndex);
-
-    // Convert the d3 tree data format into a nodes/links force format.
-    for (var i in tree[0].children) {
-        var node = tree[0].children[i];
-
-        var baseNode = { name: node.name, mutex: node.mutex, depth: 1 };
-        data.nodes.push(baseNode);
-
-        var parentIndex = data.nodes.length - 1;
-        data.links.push({ source: 0, target: parentIndex, depth: 1 });
-
-        for (var j in node.children) {
-            var node2 = node.children[j];
-
-            baseNode.mutex = baseNode.mutex || node2.mutex;
-//console.log(node2.name);
-//console.log(node2.mutex);
-            if (node2.name.indexOf('noop') != -1 || !node2Hash[node2.name]) {
-                data.nodes.push({ name: node2.name, mutex: node2.name.indexOf('noop') === -1 ? node2.mutex : null, depth: 2 });
-                data.links.push({ source: parentIndex, target: data.nodes.length - 1, depth: 2 });
-
-                // Remember this node along with its index, in case we need to link to it again.
-                node2Hash[node2.name] = data.nodes.length - 1;
-            }
-            else {
-                // This node already exists, so link to it.
-                data.links.push({ source: parentIndex, target: node2Hash[node2.name], depth: 2 });
-            }
-
-            var parentIndex2 = data.nodes.length - 1;
-
-            for (var k in node2.children) {
-                var node3 = node2.children[k];
-
-                if (node3.name.indexOf('noop') != -1 || !node3Hash[node3.name]) {
-                    data.nodes.push({ name: node3.name, mutex: node3.mutex, depth: 3 });
-                    data.links.push({ source: parentIndex2, target: data.nodes.length - 1, depth: 3 });
-
-                    // Remember this node along with its index, in case we need to link to it again.
-                    node3Hash[node3.name] = data.nodes.length - 1;
-                }
-                else {
-                    // This node already exists, so link to it.
-                    data.links.push({ source: parentIndex2, target: node3Hash[node3.name], depth: 3 });
-                }
-            }            
-        }
-    }
-
-    return data;
-}
 
 function drawTree(treeData, window) {
     var el = window.document.querySelector('#dataviz-container');
