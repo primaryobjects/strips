@@ -172,7 +172,11 @@ GraphPlanManager = {
         }
 
         while (!isDone) {
+            var subGoals = goals.filter(goal => !goal.solved);
+
             GraphPlanManager.verbose && GraphPlanManager.output('Processing graph at layer ' + min);
+            GraphPlanManager.verbose && GraphPlanManager.output('Goals');
+            GraphPlanManager.verbose && GraphPlanManager.output(subGoals);
 
             var isSatisfied = true;
 
@@ -186,7 +190,7 @@ GraphPlanManager = {
             var literals = data.nodes.filter(node => node.depth === 3);
 
             // Get the available actions for each goal. (A1)
-            var actions = goals.map(goal => {
+            var actions = subGoals.map(goal => {
                 // Find the matching literal for this goal.
                 var literal = literals.find(literal => literal.name === goal.action.key && literal.depth === 3);
 
@@ -265,7 +269,12 @@ GraphPlanManager = {
                         GraphPlanManager.verbose && GraphPlanManager.output('Satisfied goal ' + action1.goal + ' with ' + action1.name);
 
                         var index = goals.findIndex(goal => goal.key === action1.goal);
+
+                        // Set the solution action for this particular goal.
+                        goals[index].solution = action1.name;
+                        goals[index].noop = action1.name.indexOf('noop-') === 0;
                         goals[index].solved = true;
+                        goals[index].level = min;
                     }
                 }
 
@@ -281,7 +290,7 @@ GraphPlanManager = {
                     });
 
                     // Find all links that lead to each action. These will be our new sub-goals.
-                    literals = actions.map(action => {
+                    actions = actions.map(action => {
                         var links = data.links.filter(link => link.target === action.index && link.depth === 2);
 
                         // Find all literals (P0) that this link points to. These are available literals that lead to this action.
@@ -303,13 +312,16 @@ GraphPlanManager = {
                     });
 
                     if (min > 1) {
-                        goals = [];
-                        literals.forEach(literal => {
-                            goals.push({ key: literal[0].key, action: literal[0], solved: false });
+                        subGoals = [];
+
+                        actions.forEach(group => {
+                            subGoals = subGoals.concat(group.map(literal => { return { key: literal.key, action: literal, solved: false } }));
                         });
 
+                        goals = goals.concat(subGoals);
+
                         GraphPlanManager.verbose && GraphPlanManager.output('Sub-goals added.');
-                        GraphPlanManager.verbose && GraphPlanManager.output(goals);
+                        GraphPlanManager.verbose && GraphPlanManager.output(subGoals);
                     }
                     
                     break;
@@ -322,12 +334,19 @@ GraphPlanManager = {
                 max--;
             }
             else {
+                // Reset solved goals since we're moving deeper for a solution.
+                goals.forEach(goal => goal.solved = false);
+
                 min++;
                 max++;
             }
 
             isDone = min <= 0 || min >= 3;
         }
+
+        return goals.filter(goal => goal.solved && !goal.noop)
+                    .sort((goal1, goal2) => { return goal1.level - goal2.level })
+                    .map(goal => goal.solution);
     },
 
     markMutex: function(graph) {
