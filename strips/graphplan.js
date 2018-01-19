@@ -21,7 +21,7 @@ GraphPlanManager = {
         return strips.load(domainPath, problemPath, callback, isCode);
     },
 
-    graph: function(domain, problem, min = 1, max = 1) {
+    graph: function(domain, problem, min = 1, max = min) {
         // Get a planning graph.
         var graph = strips.graph(domain, problem, min, max);
         
@@ -44,8 +44,11 @@ GraphPlanManager = {
 
             // Format action name: 'cook x y z'.
             var name = (action.type === 'noop' ? 'noop-' : '') + action.action + (action.parameters ? '-' : '');
-            name += action.parameters ? action.parameters.map(parameter => { return parameter.parameter; }).join(' ') : '';
-
+            name += action.parameters ? action.parameters.map(parameter => {
+                // Substitute parameters with map values.
+                return action.map ? action.map[parameter.parameter] : parameter.parameter;
+            }).join(' ') : '';
+            
             // Start action node.
             var node = { name: name, parent: null, children: [], mutex: action.mutex };
             var p0 = null;
@@ -56,7 +59,11 @@ GraphPlanManager = {
                 var act = action.precondition[k];
                 if (act.action) {
                     var name = (act.operation || 'and') + '-' + act.action + '-';
-                    name += act.parameters ? act.parameters.join(' ') : ''
+                    //name += act.parameters ? act.parameters.join(' ') : '';
+                    name += act.parameters ? act.parameters.map(parameter => {
+                        // Substitute parameters with map values.
+                        return act.map ? act.map[parameter] : parameter;
+                    }).join(' ') : '';
 
                     p0 = actionHash[name];
                     if (!p0) {
@@ -80,7 +87,11 @@ GraphPlanManager = {
                 var act = action.effect[k];
 
                 var name = (act.operation || 'and') + '-' + act.action + '-';
-                name += act.parameters ? act.parameters.join(' ') : '';
+                //name += act.parameters ? act.parameters.join(' ') : '';
+                name += act.parameters ? act.parameters.map(parameter => {
+                    // Substitute parameters with map values.
+                    return act.map ? act.map[parameter] : parameter;
+                }).join(' ') : '';
 
                 p1 = { name: name, parent: node.name, children: [], mutex: act.mutex };
                 node.children.push(p1);
@@ -119,7 +130,7 @@ GraphPlanManager = {
                 baseNode.mutex = baseNode.mutex || node2.mutex;
 
                 if (node2.name.indexOf('noop') != -1 || !node2Hash[node2.name]) {
-                    data.nodes.push({ name: node2.name, mutex: node2.name.indexOf('noop') === -1 ? node2.mutex : null, index: index++, depth: 2 });
+                    data.nodes.push({ name: node2.name, mutex: node2.mutex, index: index++, depth: 2 });
                     data.links.push({ source: parentIndex, target: data.nodes.length - 1, depth: 2 });
 
                     // Remember this node along with its index, in case we need to link to it again.
@@ -165,12 +176,17 @@ GraphPlanManager = {
             action.operation = action.operation || 'and';
 
             var name = (action.type === 'noop' ? 'noop' : action.operation) + '-' + action.action + (action.parameters ? '-' : '');
-            name += action.parameters.join(' ');
+            //name += action.parameters.join(' ');
+            name += action.parameters.map(parameter => {
+                // Substitute parameters with map values.
+                return action.map ? action.map[parameter] : parameter;
+            }).join(' ');// : '';
+//console.log('**** ' + name);
             action.key = name;
 
             goals.push({ key: action.key, action: action, solved: false });
         }
-
+//return;
         while (!isDone) {
             var subGoals = goals.filter(goal => !goal.solved);
 
@@ -185,7 +201,8 @@ GraphPlanManager = {
 
             // Convert the graph into a node/link format.
             var data = GraphPlanManager.nodes(graph, min - 1);
-
+//console.log(util.inspect(data, true, 100));
+//return;
             // Get the literals from the last layer. (P1)
             var literals = data.nodes.filter(node => node.depth === 3);
 
@@ -208,7 +225,7 @@ GraphPlanManager = {
                             // Include the parameters from the parent literal as the name for this mutex.
                             var index = literal.name.lastIndexOf('-');
                             mutex.key += literal.name.substring(index);
-
+//console.log('*** ' + literal.name + ' | ' + mutex.key);
                             return mutex;
                         });
                     }
