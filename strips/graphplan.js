@@ -141,13 +141,14 @@ GraphPlanManager = {
                 // Format mutex name.
                 if (node2.mutex) {
                     node2.mutex.forEach(mutex => {
-                    //console.log(util.inspect(action.mutex, true, 100, true));
-                    mutex.name = mutex.action +
-                        (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
-                                    // Substitute parameters with map values.
-                                    return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
-                                }).join(' ').trim('-') : '');
-                        //console.log(mutex.name);
+                        //console.log(util.inspect(action.mutex, true, 100, true));
+                        mutex.name = mutex.action +
+                            (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                                        // Substitute parameters with map values.
+                                        return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
+                                    }).join(' ') : '');
+
+                        console.log(mutex.name);
                     });
                 }
 

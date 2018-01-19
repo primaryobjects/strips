@@ -223,6 +223,14 @@ var formatMutex = function(action) {
                     return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
                 }).join(' ') : ''));
 
+            if (name[name.length - 1] === '-') {
+                name = (op ? op + ' ' : '') + mutex.action + 
+                    (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                        // Substitute parameters with map values.
+                        return mutex.map ? mutex.map[parameter] : parameter;
+                    }).join(' ') : '');
+            }
+
             formatted.push({ op: op, action: mutex.action, parameters: mutex.parameters, map: mutex.map, name: name, reason: mutex.reason });
         });
     }
