@@ -148,7 +148,7 @@ GraphPlanManager = {
                                         return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
                                     }).join(' ') : '');
 
-                        console.log(mutex.name);
+                        //console.log(mutex.name);
                     });
                 }
 
