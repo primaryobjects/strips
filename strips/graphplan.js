@@ -48,7 +48,18 @@ GraphPlanManager = {
                 // Substitute parameters with map values.
                 return action.map ? action.map[parameter.parameter] : parameter.parameter;
             }).join(' ') : '';
-            
+
+            // Format mutex name.
+            if (action.mutex) {
+                action.mutex.forEach(mutex => {
+                mutex.name = mutex.action + 
+                    (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                        // Substitute parameters with map values.
+                        return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
+                    }).join(' ').trim('-') : '');
+                });
+            }
+
             // Start action node.
             var node = { name: name, parent: null, children: [], mutex: action.mutex };
             var p0 = null;
@@ -126,6 +137,19 @@ GraphPlanManager = {
 
             for (var j in node.children) {
                 var node2 = node.children[j];
+
+                // Format mutex name.
+                if (node2.mutex) {
+                    node2.mutex.forEach(mutex => {
+                    //console.log(util.inspect(action.mutex, true, 100, true));
+                    mutex.name = mutex.action +
+                        (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                                    // Substitute parameters with map values.
+                                    return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
+                                }).join(' ').trim('-') : '');
+                        //console.log(mutex.name);
+                    });
+                }
 
                 baseNode.mutex = baseNode.mutex || node2.mutex;
 
@@ -223,8 +247,14 @@ GraphPlanManager = {
                             mutex.key = mutex.action;
 
                             // Include the parameters from the parent literal as the name for this mutex.
-                            var index = literal.name.lastIndexOf('-');
-                            mutex.key += literal.name.substring(index);
+                            //var index = literal.name.lastIndexOf('-');
+                            //mutex.key += literal.name.substring(index);
+                            //console.log(mutex);
+                            mutex.key += mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                                // Substitute parameters with map values.
+                                return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
+                            }).join(' ') : '';
+
 //console.log('*** ' + literal.name + ' | ' + mutex.key);
                             return mutex;
                         });
@@ -260,6 +290,10 @@ GraphPlanManager = {
 
                         // Is action2 in mutex with action1?
                         var isMutex1 = mutexNames1.find(name => name === action2.name);
+/*console.log('**** action2.name');
+console.log(action2.name);
+console.log('**** mutexNames1');
+console.log(mutexNames1);*/
 
                         // Is action1 in mutex with action2?
                         var isMutex2 = mutexNames2.find(name => name === action1.name);
@@ -360,7 +394,7 @@ GraphPlanManager = {
 
             isDone = min <= 0 || min >= 3;
         }
-
+//console.log(goals);
         return goals.filter(goal => goal.solved && !goal.noop)
                     .sort((goal1, goal2) => { return goal1.level - goal2.level })
                     .map(goal => goal.solution);
@@ -463,7 +497,7 @@ GraphPlanManager = {
                         // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                         action.mutex = action.mutex || [];
                         action.mutexHash = action.mutexHash || {};
-                        var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, reason: 'inconsistentEffect' };
+                        var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, parameters: subMutexAction.parameters, map: subMutexAction.map, reason: 'inconsistentEffect' };
                         var objStr = JSON.stringify(obj);
                         if (!action.mutexHash[objStr]) {
                             action.mutex.push(obj);
@@ -472,7 +506,7 @@ GraphPlanManager = {
 
                         subMutexAction.mutex = subMutexAction.mutex || [];
                         subMutexAction.mutexHash = subMutexAction.mutexHash || {};
-                        obj = { action: action.action, precondition: action.precondition, effect: action.effect, reason: 'inconsistentEffect' };
+                        obj = { action: action.action, precondition: action.precondition, effect: action.effect, parameters: action.parameters, map: action.map, reason: 'inconsistentEffect' };
                         objStr = JSON.stringify(obj);
                         if (!subMutexAction.mutexHash[objStr]) {
                             subMutexAction.mutex.push(obj);
@@ -508,7 +542,7 @@ GraphPlanManager = {
                             // Found an opposite (not us). The action at the hash value is a mutex with the current action and vice-versa.
                             action.mutex = action.mutex || [];
                             action.mutexHash = action.mutexHash || {};
-                            var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, reason: 'interference' };
+                            var obj = { action: subMutexAction.action, precondition: subMutexAction.precondition, effect: subMutexAction.effect, parameters: subMutexAction.parameters, map: subMutexAction.map, reason: 'interference' };
                             var objStr = JSON.stringify(obj);
                             if (!action.mutexHash[objStr]) {
                                 action.mutex.push(obj);
@@ -517,7 +551,7 @@ GraphPlanManager = {
 
                             subMutexAction.mutex = subMutexAction.mutex || [];
                             subMutexAction.mutexHash = subMutexAction.mutexHash || {};
-                            obj = { action: action.action, precondition: action.precondition, effect: action.effect, reason: 'interference' };
+                            obj = { action: action.action, precondition: action.precondition, effect: action.effect, parameters: action.parameters, map: action.map, reason: 'interference' };
                             objStr = JSON.stringify(obj);
                             if (!subMutexAction.mutexHash[objStr]) {
                                 subMutexAction.mutex.push(obj);
@@ -554,7 +588,7 @@ GraphPlanManager = {
                     // Found an opposite. The action at the hash value is a mutex with the current action and vice-versa.
                     effect.mutex = effect.mutex || [];
                     effect.mutexHash = effect.mutexHash || {};
-                    var obj = { action: oppositeEffect.action, operation: oppositeEffect.operation, parameters: oppositeEffect.parameters, reason: 'negation' };
+                    var obj = { action: oppositeEffect.action, operation: oppositeEffect.operation, parameters: oppositeEffect.parameters, map: oppositeEffect.map, reason: 'negation' };
                     var objStr = JSON.stringify(obj);
                     if (!effect.mutexHash[objStr]) {
                         effect.mutex.push(obj);
@@ -653,7 +687,7 @@ GraphPlanManager = {
                             literal1.mutex = literal1.mutex || [];
                             literal1.mutexHash = literal1.mutexHash || {};
 
-                            var mutex = { action: literal2.action, operation: literal2.operation, parameters: literal2.parameters, reason: 'inconsistentSupport' };
+                            var mutex = { action: literal2.action, operation: literal2.operation, parameters: literal2.parameters, map: literal2.map, reason: 'inconsistentSupport' };
                             var mutexStr = JSON.stringify(mutex);
                             if (!literal1.mutexHash[mutexStr]) {
                                 literal1.mutex.push(mutex);

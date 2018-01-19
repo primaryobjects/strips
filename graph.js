@@ -154,7 +154,7 @@ function drawGraph(treeData, window) {
         .style('font-family', 'arial')
         .style('font-size', '10px')
         .style('fill', '#f00')
-        .text(function(d) { return formatMutex(d).map(mutex => { return (mutex.op ? mutex.op + ' ' : '') + mutex.action }).join(', ') });
+        .text(d => { return formatMutex(d).map(mutex => mutex.name).join(', ') });
 
     force.on("tick", function(e) {
         var ky = e.alpha;
@@ -210,14 +210,20 @@ var formatMutex = function(action) {
     var formatted = [];
 
     if (action.mutex) {
-        action.mutex.forEach(function(mutex) {
+        action.mutex.forEach(mutex => {
             // If this is a literal, include the operation (and, not).
             var op = mutex.operation;
             if (!op && mutex.precondition && mutex.precondition[0].action == mutex.action) {
                 op = mutex.precondition[0].operation;
             }
 
-            formatted.push({ op: op, action: mutex.action, reason: mutex.reason });
+            var name = mutex.name || ((mutex.op ? mutex.op + ' ' : '') + mutex.action +
+                (mutex.parameters ? '-' + mutex.parameters.map(parameter => {
+                    // Substitute parameters with map values.
+                    return mutex.map ? mutex.map[parameter.parameter] : parameter.parameter;
+                }).join(' ') : ''));
+
+            formatted.push({ op: op, action: mutex.action, parameters: mutex.parameters, map: mutex.map, name: name, reason: mutex.reason });
         });
     }
 
