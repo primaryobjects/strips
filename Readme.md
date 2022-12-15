@@ -3,7 +3,7 @@
 
 This project is a demo of using the artificial intelligence automated planning library [strips](https://www.npmjs.com/package/strips), in node.js.
 
-Try it online at https://stripsfiddle.herokuapp.com
+Try it online at https://stripsfiddle.meteorapp.com
 
 ```
 npm install strips
